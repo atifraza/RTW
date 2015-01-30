@@ -16,7 +16,7 @@ public class Test {
 //			System.exit(1);
 //		} else
 		{
-			final int MAX_RUNS_PER_INST = 1;
+			final int MAX_RUNS_PER_INST = 10;
 			int[] windowWidth = {5, 10, 100};
 			TimeSeries test = null, train = null;
 			double[][] costMatrix = null;
@@ -44,9 +44,9 @@ public class Test {
 				trainFile =  dir + args[fileNum] + "_TRAIN";
 				ArrayList<TimeSeries> training = readData(trainFile);
 
-				FileWriter fwLengthTime = new FileWriter(dir+args[fileNum]+"_AvgLength+Times.csv");
+				FileWriter fwLengthTime = new FileWriter(dir+"Results/"+args[fileNum]+"_AvgLength+Times.csv");
 				BufferedWriter bwLengthTime = new BufferedWriter(fwLengthTime);
-				FileWriter fwAccuracy = new FileWriter(dir+args[fileNum]+"_Accuracy.csv");
+				FileWriter fwAccuracy = new FileWriter(dir+"Results/"+args[fileNum]+"_Accuracy.csv");
 				BufferedWriter bwAccuracy = new BufferedWriter(fwAccuracy);
 				fileNum++;
 
@@ -56,58 +56,54 @@ public class Test {
 				heuAccuracyResults.append("Window (%), Test#, Predicted_Class, Actual_Class\n");
 				for(int window : windowWidth) {
 					System.out.println("Current Window Size: " + window);
-//					for(int dsRunNum = 0; dsRunNum<MAX_RUNS_PER_DATASET; dsRunNum++) {
-						for(int i=0; i<testing.size(); i++) {
-							//System.out.print(i + " ");
+					for(int i=0; i<testing.size(); i++) {
+						System.out.print(i + " of " + testing.size() + " ");
+						test = testing.get(i);
+						bestDist = Double.POSITIVE_INFINITY;
+						classPredicted = 0;
+						for(int j=0; j<training.size(); j++) {
+							train = training.get(j);
 							
-							test = testing.get(i);
-							bestDist = Double.POSITIVE_INFINITY;
-							classPredicted = 0;
-							for(int j=0; j<training.size(); j++) {
-								train = training.get(j);
-								
+							startTime = System.currentTimeMillis();
+							costMatrix = utils.dtw.HeuristicDTW.calculateCostMatrix(test, train, distFn, window);
+							endTime = System.currentTimeMillis();
+							costMatTime = endTime - startTime;
+							
+							sumLength = 0;
+							sumTime = 0;
+							for(int instRunNum = 0; instRunNum<MAX_RUNS_PER_INST; instRunNum++) {
 								startTime = System.currentTimeMillis();
-								costMatrix = utils.dtw.HeuristicDTW.calculateCostMatrix(test, train, distFn, window);
+								infoHeu = utils.dtw.HeuristicDTW.getDTW(costMatrix, test.size(), train.size(), true);
 								endTime = System.currentTimeMillis();
-								costMatTime = endTime - startTime;
+								dtwHeuTime = endTime - startTime;
 								
-								sumLength = 0;
-								sumTime = 0;
-								for(int instRunNum = 0; instRunNum<MAX_RUNS_PER_INST; instRunNum++) {
-									startTime = System.currentTimeMillis();
-									infoHeu = utils.dtw.HeuristicDTW.getDTW(costMatrix, test.size(), train.size(), true);
-									endTime = System.currentTimeMillis();
-									dtwHeuTime = endTime - startTime;
-									
-									sumTime += dtwHeuTime;
-									sumLength += infoHeu.getWarpPathLength();
+								sumTime += dtwHeuTime;
+								sumLength += infoHeu.getWarpPathLength();
 
-									if(infoHeu.getWarpDistance()<bestDist) {
-										bestDist = infoHeu.getWarpDistance();
-										classPredicted = train.getTSClass();
-									}
+								if(infoHeu.getWarpDistance()<bestDist) {
+									bestDist = infoHeu.getWarpDistance();
+									classPredicted = train.getTSClass();
 								}
-
-								startTime = System.currentTimeMillis();
-								infoNorm = utils.dtw.HeuristicDTW.getDTW(costMatrix, test.size(), train.size(), false);
-								endTime = System.currentTimeMillis();
-								dtwNormTime = endTime - startTime;
-								
-								temp = window + ", " + i + ", " + j + ", ";
-								heuPathLengthResults.append(temp +
-								                       sumLength/10 + ", " +
-								                       infoNorm.getWarpPathLength() + ", " +
-								                       costMatTime + ", " + sumTime/10 +  ", " + dtwNormTime + "\n");
-								//heuAccuracyResults.append(temp);
-
-								bwLengthTime.write(heuPathLengthResults.toString());
-								heuPathLengthResults.delete(0, heuPathLengthResults.length());
 							}
-							heuAccuracyResults.append(window + ", " + i + ", " + classPredicted + ", " + test.getTSClass() + "\n");
-							bwAccuracy.write(heuAccuracyResults.toString());
-							heuAccuracyResults.delete(0, heuAccuracyResults.length());
+
+							startTime = System.currentTimeMillis();
+							infoNorm = utils.dtw.HeuristicDTW.getDTW(costMatrix, test.size(), train.size(), false);
+							endTime = System.currentTimeMillis();
+							dtwNormTime = endTime - startTime;
+							
+							temp = window + ", " + i + ", " + j + ", ";
+							heuPathLengthResults.append(temp +
+							                       sumLength/10 + ", " +
+							                       infoNorm.getWarpPathLength() + ", " +
+							                       costMatTime + ", " + sumTime/10 +  ", " + dtwNormTime + "\n");
+
+							bwLengthTime.write(heuPathLengthResults.toString());
+							heuPathLengthResults.delete(0, heuPathLengthResults.length());
 						}
-//					}
+						heuAccuracyResults.append(window + ", " + i + ", " + classPredicted + ", " + test.getTSClass() + "\n");
+						bwAccuracy.write(heuAccuracyResults.toString());
+						heuAccuracyResults.delete(0, heuAccuracyResults.length());
+					}
 					System.out.println();
 				}
 				bwLengthTime.close();
@@ -116,20 +112,6 @@ public class Test {
 			}
 		}
 	}
-	
-//	public static String calcStatistics(ArrayList<Integer> wpLength) {
-//		long sum = 0;
-//		for (Integer i : wpLength) {
-//			sum += i.longValue();
-//		}
-//		double mean = (double) sum/wpLength.size();
-//		double stdev = 0;
-//		for (Integer i : wpLength) {
-//			stdev += Math.pow(mean-i, 2);
-//		}
-//		stdev = Math.sqrt(stdev/wpLength.size());
-//		return "Mean: " + mean + " Std Dev: " + stdev;
-//	}
 	
 	public static ArrayList<TimeSeries> readData(String inFile ) {
 		ArrayList<TimeSeries> ret = new ArrayList<TimeSeries>();
