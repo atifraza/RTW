@@ -9,7 +9,7 @@ import utils.distance.DistanceFunction;
 import utils.distance.DistanceFunctionFactory;
 import utils.dtw.WarpInfo;
 
-public class Test {
+public class HeuristicGuassian {
 	public static void main(String[] args) throws Exception {
 //		if(args.length != 3) {
 //			System.out.println("Usage: Test TestingFile TrainingFile [EuclideanDistance|ManhattanDistance|BinaryDistance]");
@@ -17,24 +17,22 @@ public class Test {
 //		} else
 		{
 			final int MAX_RUNS_PER_INST = 10;
-			int[] windowWidth = {5, 10, 100};
+			int[] windowWidth = {100, 10, 5};
 			TimeSeries test = null, train = null;
-			double[][] costMatrix = null;
 			WarpInfo infoHeu;
-			WarpInfo infoNorm;
 			
 			int classPredicted = 0;
 			double bestDist;
 
-			StringBuilder heuPathLengthResults = new StringBuilder();
-			StringBuilder heuAccuracyResults = new StringBuilder();
+			StringBuilder pathLengthAndTimes = new StringBuilder();
+			StringBuilder accuracy = new StringBuilder();
 			String temp;
 			long startTime, endTime;
-			long costMatTime = 0, dtwHeuTime = 0, dtwNormTime = 0;
+			long heuristicDTWTime = 0;
 			double sumLength, sumTime;
 
 			int fileNum = 0;
-			String testFile, trainFile, dir = "/home/atif/work/TimeSeriesUCR/";
+			String testFile, trainFile, dir = "/home/atif/work/TimeSeriesUCR/", resultsDir = dir+"Results/";
 			while(fileNum < args.length) {
 				System.out.println("Processing " + args[fileNum]);
 				
@@ -44,40 +42,39 @@ public class Test {
 				trainFile =  dir + args[fileNum] + "_TRAIN";
 				ArrayList<TimeSeries> training = readData(trainFile);
 
-				FileWriter fwLengthTime = new FileWriter(dir+"Results/"+args[fileNum]+"_AvgLength+Times.csv");
+				FileWriter fwLengthTime = new FileWriter(resultsDir+args[fileNum]+"_GuassianHeuristic_LengthTimes.csv");
 				BufferedWriter bwLengthTime = new BufferedWriter(fwLengthTime);
-				FileWriter fwAccuracy = new FileWriter(dir+"Results/"+args[fileNum]+"_Accuracy.csv");
+				FileWriter fwAccuracy = new FileWriter(resultsDir+args[fileNum]+"_GuassianHeuristic_Accuracy.csv");
 				BufferedWriter bwAccuracy = new BufferedWriter(fwAccuracy);
 				fileNum++;
 
 				DistanceFunction distFn = DistanceFunctionFactory.getDistFnByName("EuclideanDistance");
 				
-				heuPathLengthResults.append("Window (%), Test#, Train#, AvgLen(" + MAX_RUNS_PER_INST + " run), NormLen, MatCalc (ms), DTWHeuristic (ms), DTWNormal (ms)\n");
-				heuAccuracyResults.append("Window (%), Test#, Predicted_Class, Actual_Class\n");
+				pathLengthAndTimes.append("Window (%), Test#, Train#, AvgLen(" + MAX_RUNS_PER_INST + " runs), DTWHeuristic (ms)\n");
+				accuracy.append("Window (%), Test#, Predicted_Class_Uniform, Actual_Class\n");
 				for(int window : windowWidth) {
 					System.out.println("Current Window Size: " + window);
+					System.out.println("Testing Set Size: " + testing.size());
 					for(int i=0; i<testing.size(); i++) {
-						System.out.print(i + " of " + testing.size() + " ");
+						System.out.print(".");
+						if((i+1)%100==0) {
+							System.out.println();
+						}
 						test = testing.get(i);
 						bestDist = Double.POSITIVE_INFINITY;
 						classPredicted = 0;
 						for(int j=0; j<training.size(); j++) {
 							train = training.get(j);
 							
-							startTime = System.currentTimeMillis();
-							costMatrix = utils.dtw.HeuristicDTW.calculateCostMatrix(test, train, distFn, window);
-							endTime = System.currentTimeMillis();
-							costMatTime = endTime - startTime;
-							
 							sumLength = 0;
 							sumTime = 0;
 							for(int instRunNum = 0; instRunNum<MAX_RUNS_PER_INST; instRunNum++) {
 								startTime = System.currentTimeMillis();
-								infoHeu = utils.dtw.HeuristicDTW.getDTW(costMatrix, test.size(), train.size(), true);
+								infoHeu = utils.dtw.DynamicTimeWarping.getHeuristicDTW(test, train, distFn, window, 2);
 								endTime = System.currentTimeMillis();
-								dtwHeuTime = endTime - startTime;
+								heuristicDTWTime = endTime - startTime;
 								
-								sumTime += dtwHeuTime;
+								sumTime += heuristicDTWTime;
 								sumLength += infoHeu.getWarpPathLength();
 
 								if(infoHeu.getWarpDistance()<bestDist) {
@@ -86,23 +83,15 @@ public class Test {
 								}
 							}
 
-							startTime = System.currentTimeMillis();
-							infoNorm = utils.dtw.HeuristicDTW.getDTW(costMatrix, test.size(), train.size(), false);
-							endTime = System.currentTimeMillis();
-							dtwNormTime = endTime - startTime;
-							
 							temp = window + ", " + i + ", " + j + ", ";
-							heuPathLengthResults.append(temp +
-							                       sumLength/10 + ", " +
-							                       infoNorm.getWarpPathLength() + ", " +
-							                       costMatTime + ", " + sumTime/10 +  ", " + dtwNormTime + "\n");
+							pathLengthAndTimes.append(temp + sumLength/10 + ", " + sumTime/10 + "\n");
 
-							bwLengthTime.write(heuPathLengthResults.toString());
-							heuPathLengthResults.delete(0, heuPathLengthResults.length());
+							bwLengthTime.write(pathLengthAndTimes.toString());
+							pathLengthAndTimes.delete(0, pathLengthAndTimes.length());
 						}
-						heuAccuracyResults.append(window + ", " + i + ", " + classPredicted + ", " + test.getTSClass() + "\n");
-						bwAccuracy.write(heuAccuracyResults.toString());
-						heuAccuracyResults.delete(0, heuAccuracyResults.length());
+						accuracy.append(window + ", " + i + ", " + classPredicted + ", " + test.getTSClass() + "\n");
+						bwAccuracy.write(accuracy.toString());
+						accuracy.delete(0, accuracy.length());
 					}
 					System.out.println();
 				}

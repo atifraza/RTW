@@ -18,6 +18,11 @@ public class WarpInfo {
 		tsJindices.add(0, j);
 	}
 	
+	public void addLast(int i, int j) {
+		tsIindices.add(tsIindices.size(), i);
+		tsJindices.add(tsJindices.size(), j);
+	}
+	
 	public void setWarpDistance(double dist) {
 		warpDist = dist;
 	}
