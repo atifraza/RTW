@@ -20,6 +20,7 @@ public class DynamicTimeWarping {
 		int i = 0;						// Current index number for TimeSeries I
 		int j = 0;						// Current index number for TimeSeries J
 		double epsilon = 1e-9, epsilon3x = 3e-9;
+		double STD_DEV = 1.0/3, VARIANCE = STD_DEV*STD_DEV, MEAN = 1;
 		
 		Random rand = new Random();
 
@@ -78,9 +79,10 @@ public class DynamicTimeWarping {
 					// the random number is between 0 and 1 so we multiply it with
 					// 2 to get it between 0 and 2 
 				} else {
-					selProb = rand.nextGaussian() + 1;	// generate a normally distributed
-					// random number, it has a mean at 0 and a std of 1, so we add 1 to it
-					// to shift it's mean to 1
+					selProb = MEAN + rand.nextGaussian()*VARIANCE;	// generate a normally distributed
+					// random number, it has a mean at 0 and a std of 1, so we add MEAN to it
+					// to shift it's mean to 1 and multiply it with VARIANCE to generate random numbers
+					// within required Standard Deviation
 					if (selProb <0 || selProb >=2) {
 						continue;
 					}

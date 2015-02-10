@@ -61,7 +61,7 @@ public class DTW_Test {
 					System.out.println("Current Window Size: " + window);
 					System.out.println("Testing Set Size: " + testing.size());
 					for(int i=0; i<testing.size(); i++) {
-						if(i%100==0) {
+						if(i%10==0) {
 							System.out.print(i+" ");
 						}
 						test = testing.get(i);

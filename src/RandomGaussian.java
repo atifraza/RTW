@@ -4,19 +4,20 @@ public final class RandomGaussian {
 
 	public static void main(String... aArgs) {
 		Random fRandom = new Random();
-		double MEAN = 0.5f;
-		double VARIANCE = 0.075f;
-		double temp, mean=0;
-		long idx, outside = 0;;
-		for (idx = 0; idx < Long.MAX_VALUE; idx++) {
+		int MEAN = 1;
+		double STD_DEV = 1/3.0; 
+		double VARIANCE = Math.pow(STD_DEV, 2);
+		double temp, sum=0;
+		long idx, outside = 0, max = Long.MAX_VALUE;
+		for (idx = 0; idx < max; idx++) {
 			temp = MEAN + fRandom.nextGaussian() * VARIANCE;
-			mean += temp;
-			if (temp > 1.0 || temp < 0.0) {
+			sum += temp;
+			if (temp < 0.0 || temp > 2.0) {
 				outside++;
-				System.out.println(outside);
 			}
 		}
-		System.out.println("Mean " + mean/idx);
-		System.out.println(outside);
+		System.out.println("Mean " + sum/max);
+		System.out.println("Max Gen: " + max + " Outside: " + outside);
+		System.out.println("Percentage: " + 100.0*outside/max);
 	}
 }
