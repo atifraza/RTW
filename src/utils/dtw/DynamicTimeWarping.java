@@ -1,11 +1,12 @@
 package utils.dtw;
 
 import java.util.Arrays;
-//import java.text.DecimalFormat;
-//import java.text.DecimalFormatSymbols;
-
 //import java.util.Locale;
-
+//import java.text.DecimalFormat;
+////import java.text.DecimalFormatSymbols;
+//
+////import java.util.Locale;
+//import java.text.DecimalFormatSymbols;
 import java.util.Random;
 
 import utils.timeseries.TimeSeries;
@@ -18,6 +19,7 @@ public class DynamicTimeWarping {
 		int maxJ = tsJ.size();			// maximum index number for TimeSeries J
 		int i = 0;						// Current index number for TimeSeries I
 		int j = 0;						// Current index number for TimeSeries J
+		double epsilon = 1e-9, epsilon3x = 3e-9;
 		
 		Random rand = new Random();
 
@@ -48,13 +50,16 @@ public class DynamicTimeWarping {
 				costDiag = 1e12;
 			}
 			
-			if(i+1<maxI && Math.abs(i+1-j)<w) {
+			
+			//if(i+1<maxI && Math.abs(i+1-j)<w) { // OLD Conditional, following is better to understand
+			if(i+1<Math.min(w+j, maxI)) {
 				costDown = distFn.calcDistance(tsI.get(i+1), tsJ.get(j));
 			} else {
 				costDown = 1e12;
 			}
 			
-			if(j+1<maxJ && Math.abs(j+1-i)<maxI) {
+			//if(j+1<maxJ && Math.abs(j+1-i)<maxI) { // OLD Conditional, following is better to understand
+			if(j+1<Math.min(w+i, maxJ)) {
 				costRight = distFn.calcDistance(tsI.get(i), tsJ.get(j+1));
 			} else {
 				costRight = 1e12;
@@ -62,8 +67,12 @@ public class DynamicTimeWarping {
 			
 			costSum = costDiag+costRight+costDown;
 			isValidCellChosen = false;
+//			Arrays.fill(probs, 0);				// always reinitialize the array to all zeros
+			probs[0] = (costSum-costRight+epsilon) / (costSum + epsilon3x);
+			probs[1] = (costSum-costDiag+epsilon) / (costSum + epsilon3x) + probs[0];
+			probs[2] = (costSum-costDown+epsilon) / (costSum + epsilon3x) + probs[1];
+			
 			while(!isValidCellChosen) {
-				Arrays.fill(probs, 0);				// always reinitialize the array to all zeros
 				if (distribution == 1) {
 					selProb = rand.nextDouble() * 2;	// generate a uniform random number
 					// the random number is between 0 and 1 so we multiply it with
@@ -72,49 +81,67 @@ public class DynamicTimeWarping {
 					selProb = rand.nextGaussian() + 1;	// generate a normally distributed
 					// random number, it has a mean at 0 and a std of 1, so we add 1 to it
 					// to shift it's mean to 1
-					if(selProb<0) {						// now it is between 0 and 2
-						selProb = 0; 
-					} else if (selProb >=2) {
-						selProb = 1.99;
+					if (selProb <0 || selProb >=2) {
+						continue;
 					}
 				}
 				
-				probs[0] = (costSum-costRight) / costSum;
-				probs[1] = (costSum-costDiag) / costSum + probs[0];
-				probs[2] = (costSum-costDown) / costSum + probs[1];
+				if(selProb <= probs[0] && i<maxI && j+1<maxJ) {
+					// Moving one cell Right
+					costMatrix[i][j+1] = costMatrix[i][j] + costRight;
+					j++;
+					isValidCellChosen = true;
+				} else if(selProb <= probs[1] && i+1<maxI && j+1<maxJ) {
+					// Moving diagonally
+					costMatrix[i+1][j+1] = costMatrix[i][j] + costDiag;
+					i++; j++;
+					isValidCellChosen = true;
+				} else if(selProb <= probs[2] && i+1<maxI && j<maxJ) {
+					// Moving one cell Down
+					costMatrix[i+1][j] = costMatrix[i][j] + costDown;
+					i++;
+					isValidCellChosen = true;
+				}
+				if(isValidCellChosen) {
+					info.addLast(i, j);
+					Arrays.fill(probs, 0);				// reinitialize the probs array to all zeros
+					break;
+				}
 				
-				for (int ind = 0; ind < probs.length; ind++) {
-					if (selProb <= probs[ind]) {
-						switch (ind) {
-							case 0:	{		// Moving one cell Right
-								if(i<maxI && j+1<maxJ) {
-									costMatrix[i][j+1] = costMatrix[i][j] + costRight;
-									j++;
-									isValidCellChosen = true;
-								}
-								break;
-							}
-							case 1:	{		// Moving diagonally
-								if(i+1<maxI && j+1<maxJ) {
-									costMatrix[i+1][j+1] = costMatrix[i][j] + costDiag;
-									i++; j++;
-									isValidCellChosen = true;
-								}
-								break;
-							}
-							case 2:	{		// Moving one cell Down
-								if(i+1<maxI && j<maxJ) {
-									costMatrix[i+1][j] = costMatrix[i][j] + costDown;
-									i++;
-									isValidCellChosen = true;
-								}
-								break;
-							}
-						}
-						info.addLast(i, j);
-						break;
-					}
-				}				
+//				for (int ind = 0; ind < probs.length; ind++) {
+//					if (selProb <= probs[ind]) {
+//						switch (ind) {
+//							case 0:	{
+//								if(i<maxI && j+1<maxJ) {		// Moving one cell Right
+//									costMatrix[i][j+1] = costMatrix[i][j] + costRight;
+//									j++;
+//									isValidCellChosen = true;
+//								}
+//								break;
+//							}
+//							case 1:	{
+//								if(i+1<maxI && j+1<maxJ) {		// Moving diagonally
+//									costMatrix[i+1][j+1] = costMatrix[i][j] + costDiag;
+//									i++; j++;
+//									isValidCellChosen = true;
+//								}
+//								break;
+//							}
+//							case 2:	{
+//								if(i+1<maxI && j<maxJ) {		// Moving one cell Down
+//									costMatrix[i+1][j] = costMatrix[i][j] + costDown;
+//									i++;
+//									isValidCellChosen = true;
+//								}
+//								break;
+//							}
+//						}
+//						if(isValidCellChosen) {
+//							info.addLast(i, j);
+//							break;
+//						}
+//					}
+//				}				
 			}
 			if(i+1==maxI && j+1==maxJ) {
 //				DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.ENGLISH);
@@ -123,7 +150,7 @@ public class DynamicTimeWarping {
 //				System.out.print("\n\n\n");
 //				for(int row = 0; row<maxI; row++) {
 //					for (int col = 0; col<maxJ; col++) {
-//						System.out.print(decimalFormat.format(costMatrix[row][col]) + "  ");
+//						System.out.print(decimalFormat.format(costMatrix[row][col]) + "\t");
 //					}
 //					System.out.println();
 //				}
@@ -188,6 +215,16 @@ public class DynamicTimeWarping {
 				}
 			}
 		}
+//		DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.ENGLISH);
+//		symbols.setInfinity("∞");
+//		DecimalFormat decimalFormat = new DecimalFormat("#.#", symbols);
+//		System.out.print("\n\n\n");
+//		for(int row = 0; row<maxI; row++) {
+//			for (int col = 0; col<maxJ; col++) {
+//				System.out.print(decimalFormat.format(costMatrix[row][col]) + ",");
+//			}
+//			System.out.println();
+//		}
 		return costMatrix;
 	}
 	
