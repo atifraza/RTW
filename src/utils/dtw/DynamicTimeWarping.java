@@ -3,9 +3,6 @@ package utils.dtw;
 import java.util.Arrays;
 //import java.util.Locale;
 //import java.text.DecimalFormat;
-////import java.text.DecimalFormatSymbols;
-//
-////import java.util.Locale;
 //import java.text.DecimalFormatSymbols;
 import java.util.Random;
 
@@ -163,6 +160,86 @@ public class DynamicTimeWarping {
 		return info;
 	}
 	
+	public static WarpInfo getLuckyDTW(TimeSeries tsI, TimeSeries tsJ, DistanceFunction distFn, int windowPercent) {
+		int maxI = tsI.size();			// Maximum index number for TimeSeries I
+		int maxJ = tsJ.size();			// maximum index number for TimeSeries J
+		int i = 0;						// Current index number for TimeSeries I
+		int j = 0;						// Current index number for TimeSeries J
+		WarpInfo info = new WarpInfo();	// Warping Path info (e.g. length and path indices)
+		
+		double[][] costMatrix = new double[maxI][maxJ];		// Contains calculations of warping path
+		
+		double costDiag, costRight, costDown;	// cost variables for prospective successive directions 
+
+		int w = Math.max( (int) Math.ceil( windowPercent*maxI/100.0 ),
+		                  Math.abs(maxI-maxJ));	// window size for calculation of cost matrix entries
+		
+		for(double[] current : costMatrix) {	// Assign positive infinity to entire matrix
+			Arrays.fill(current, Double.POSITIVE_INFINITY);
+		}
+
+		costMatrix[0][0] = distFn.calcDistance(tsI.get(i), tsJ.get(j));
+		info.addLast(i, j);
+		while(i<maxI && j<maxJ) {
+			if(i+1<maxI && j+1<maxJ) {
+				costDiag = distFn.calcDistance(tsI.get(i+1), tsJ.get(j+1));
+			} else {
+				costDiag = 1e12;
+			}
+						
+			//if(i+1<maxI && Math.abs(i+1-j)<w) { // OLD Conditional, following is better to understand
+			if(i+1<Math.min(w+j, maxI)) {
+				costDown = distFn.calcDistance(tsI.get(i+1), tsJ.get(j));
+			} else {
+				costDown = 1e12;
+			}
+			
+			//if(j+1<maxJ && Math.abs(j+1-i)<maxI) { // OLD Conditional, following is better to understand
+			if(j+1<Math.min(w+i, maxJ)) {
+				costRight = distFn.calcDistance(tsI.get(i), tsJ.get(j+1));
+			} else {
+				costRight = 1e12;
+			}
+			
+			if ((costDiag <= costRight) && (costDiag <= costDown)) {
+				costMatrix[i+1][j+1] = costMatrix[i][j] + costDiag;
+				i++;
+				j++;
+			} else if ((costRight < costDiag) && (costRight < costDown)) {
+				costMatrix[i][j+1] = costMatrix[i][j] + costRight;
+				j++;
+			} else if ((costDown < costDiag) && (costDown < costRight)) {
+				costMatrix[i+1][j] = costMatrix[i][j] + costDown;
+				i++;
+			} else { // costDown==costRight > costDiag
+				if(Math.random()<0.5) {	// Go down
+					costMatrix[i+1][j] = costMatrix[i][j] + costDown;
+					i++;
+				} else {				// Go right
+					costMatrix[i][j+1] = costMatrix[i][j] + costRight;
+					j++;
+				}
+			}
+			info.addLast(i, j);
+
+			if(i+1==maxI && j+1==maxJ) {
+//				DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.ENGLISH);
+//				symbols.setInfinity("∞");
+//				DecimalFormat decimalFormat = new DecimalFormat("#.#", symbols);
+//				System.out.print("\n\n\n");
+//				for(int row = 0; row<maxI; row++) {
+//					for (int col = 0; col<maxJ; col++) {
+//						System.out.print(decimalFormat.format(costMatrix[row][col]) + "\t");
+//					}
+//					System.out.println();
+//				}
+				info.setWarpDistance(costMatrix[i][j]);
+				break;
+			}
+		}
+		return info;
+	}
+	
 	public static WarpInfo getNormalDTW(TimeSeries tsI, TimeSeries tsJ, DistanceFunction distFn, int windowPercent) {
 		double[][] costMatrix = calculateCostMatrix(tsI, tsJ, distFn, windowPercent);
 		return getNormalDTW(costMatrix, tsI.size(), tsJ.size());
@@ -238,7 +315,7 @@ public class DynamicTimeWarping {
 	}
 	
 	public static WarpInfo getNormalDTW(double[][] costMatrix, int tsI_size, int tsJ_size) {
-		double diagCost, leftCost, downCost;
+		double costDiag, costLeft, costDown;
 		int i = tsI_size-1;	// tsI_size and tsJ_size have lengths of time series so subtract 
 		int j = tsJ_size-1;	// 1 from them to point to the last element of the cost matrix
 		double minDist = costMatrix[i][j];
@@ -248,28 +325,28 @@ public class DynamicTimeWarping {
 
 		while( (i>0) || (j>0) ) {
 			if ((i > 0) && (j > 0))
-				diagCost = costMatrix[i - 1][j - 1];
+				costDiag = costMatrix[i - 1][j - 1];
 			else
-				diagCost = Double.POSITIVE_INFINITY;
+				costDiag = Double.POSITIVE_INFINITY;
 
 			if (j > 0)
-				leftCost = costMatrix[i][j - 1];
+				costLeft = costMatrix[i][j - 1];
 			else
-				leftCost = Double.POSITIVE_INFINITY;
+				costLeft = Double.POSITIVE_INFINITY;
 
 			if (i > 0)
-				downCost = costMatrix[i - 1][j];
+				costDown = costMatrix[i - 1][j];
 			else
-				downCost = Double.POSITIVE_INFINITY;
+				costDown = Double.POSITIVE_INFINITY;
 
 			// Prefer moving diagonally and moving towards the i==j axis  
 			// of the matrix if there are ties.
-			if ((diagCost <= leftCost) && (diagCost <= downCost)) {
+			if ((costDiag <= costLeft) && (costDiag <= costDown)) {
 				i--;
 				j--;
-			} else if ((leftCost < diagCost) && (leftCost < downCost)) {
+			} else if ((costLeft < costDiag) && (costLeft < costDown)) {
 				j--;
-			} else if ((downCost < diagCost) && (downCost < leftCost)) {
+			} else if ((costDown < costDiag) && (costDown < costLeft)) {
 				i--;
 			} else if (i <= j) { // leftCost==rightCost > diagCost
 				i--;

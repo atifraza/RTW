@@ -18,10 +18,11 @@ public class DTW_Test {
 //			double[][] costMatrix = null;
 			WarpInfo infoNormal = null,
 					 infoUniform = null,
-					 infoGaussian = null;
+					 infoGaussian = null,
+					 infoLucky = null;
 
-			int classNormal = 0, classUniform = 0, classGaussian = 0;
-			double bestDistNormal, bestDistUniform, bestDistGaussian;
+			int classNormal = 0, classUniform = 0, classGaussian = 0, classLucky = 0;
+			double bestDistNormal, bestDistUniform, bestDistGaussian, bestDistLucky;
 			long pathLengthUniform, pathLengthGaussian;
 
 			StringBuilder accuracy = new StringBuilder();
@@ -29,7 +30,7 @@ public class DTW_Test {
 			StringBuilder times = new StringBuilder();
 
 			long startTime, endTime;
-			long timeNormal = 0, timeUniform = 0, timeGaussian = 0;
+			long timeNormal = 0, timeUniform = 0, timeGaussian = 0, timeLucky = 0;
 
 			int fileNum = 0;
 			String testFile, trainFile, dir = "/home/atif/work/TimeSeriesUCR/", resultsDir = dir+"Results/";
@@ -53,9 +54,9 @@ public class DTW_Test {
 
 				DistanceFunction distFn = DistanceFunctionFactory.getDistFnByName("EuclideanDistance");
 
-				pathLengths.append("Window, Test#, Train#, NormalLength, UniformLength, GaussianLength\n");
-				times.append("Window, Test#, Train#, Normal (ms), Uniform (ms), Gaussian (ms)\n");
-				accuracy.append("Window, Test#, Actual_Class, Predicted_Normal, Predicted_Uniform, Predicted_Gaussian\n");
+				pathLengths.append("Window, Test#, Train#, NormalLength, UniformLength, GaussianLength, LuckyLength\n");
+				times.append("Window, Test#, Train#, Normal (ms), Uniform (ms), Gaussian (ms), Lucky (ms)\n");
+				accuracy.append("Window, Test#, Actual_Class, Predicted_Normal, Predicted_Uniform, Predicted_Gaussian, Predicted_Lucky\n");
 
 				for(int window : windowWidth) {
 					System.out.println("Current Window Size: " + window);
@@ -69,10 +70,12 @@ public class DTW_Test {
 						bestDistNormal = Double.POSITIVE_INFINITY;
 						bestDistUniform = Double.POSITIVE_INFINITY;
 						bestDistGaussian = Double.POSITIVE_INFINITY;
+						bestDistLucky = Double.POSITIVE_INFINITY;
 						
 						classNormal = 0;
 						classUniform = 0;
 						classGaussian = 0;
+						classLucky = 0;
 						
 						for(int j=0; j<training.size(); j++) {
 							train = training.get(j);
@@ -80,6 +83,7 @@ public class DTW_Test {
 							timeNormal = 0;
 							timeUniform = 0;
 							timeGaussian = 0;
+							timeLucky = 0;
 							
 							startTime = System.currentTimeMillis();
 							infoNormal = utils.dtw.DynamicTimeWarping.getNormalDTW(test, train, distFn, window);
@@ -89,6 +93,16 @@ public class DTW_Test {
 							if(infoNormal.getWarpDistance()<bestDistNormal) {
 								bestDistNormal = infoNormal.getWarpDistance();
 								classNormal = train.getTSClass();
+							}
+
+							startTime = System.currentTimeMillis();
+							infoLucky = utils.dtw.DynamicTimeWarping.getLuckyDTW(test, train, distFn, window);
+							endTime = System.currentTimeMillis();
+							timeLucky = endTime - startTime;
+							
+							if(infoLucky.getWarpDistance()<bestDistLucky) {
+								bestDistLucky = infoLucky.getWarpDistance();
+								classLucky = train.getTSClass();
 							}
 
 							pathLengthUniform = 0;
@@ -121,12 +135,14 @@ public class DTW_Test {
 							pathLengths.append(window + ", " + i + ", " + j + ", " +
 											   infoNormal.getWarpPathLength() + ", " +
 											   (double)pathLengthUniform/MAX_RUNS_PER_INST + ", " +
-											   (double)pathLengthGaussian/MAX_RUNS_PER_INST + "\n");
+											   (double)pathLengthGaussian/MAX_RUNS_PER_INST + ", " +
+											   infoLucky.getWarpPathLength() + "\n");
 
 							times.append(window + ", " + i + ", " + j + ", " +
 										 timeNormal + ", " +
 										 (double)timeUniform/MAX_RUNS_PER_INST + ", " +
-										 (double)timeGaussian/MAX_RUNS_PER_INST + "\n");
+										 (double)timeGaussian/MAX_RUNS_PER_INST + ", " +
+										 timeLucky + "\n");
 
 							bwLengths.write(pathLengths.toString());
 							bwTimes.write(times.toString());
@@ -134,7 +150,8 @@ public class DTW_Test {
 							times.delete(0, times.length());
 						}
 						accuracy.append(window + ", " + i + ", " + test.getTSClass() + ", " +
-						                classNormal + ", " + classUniform + ", " + classGaussian + "\n");
+						                classNormal + ", " + classUniform + ", " +
+						                classGaussian + ", " + classLucky + "\n");
 						bwAccuracy.write(accuracy.toString());
 						accuracy.delete(0, accuracy.length());
 					}
