@@ -16,7 +16,7 @@ public class NormalDTW {
 //			System.exit(1);
 //		} else
 		{
-			int[] windowWidth = {100, 10, 5};
+			int[] windowWidth = {100, 50, 20, 15, 10, 5};
 			TimeSeries test = null, train = null;
 			double[][] costMatrix = null;
 			WarpInfo infoNorm;
@@ -24,16 +24,18 @@ public class NormalDTW {
 			int classPredicted = 0;
 			double bestDist;
 
-			StringBuilder pathLengthAndTimes = new StringBuilder();
+			StringBuilder pathLengths = new StringBuilder();
 			StringBuilder accuracy = new StringBuilder();
+			StringBuilder times = new StringBuilder();
+			
 			String temp;
 			long startTime, endTime;
-			long costMatTime = 0, dtwNormTime = 0;
+			long dtwNormTime = 0;
 
 			int fileNum = 0;
-			String testFile, trainFile, dir = "/home/atif/work/TimeSeriesUCR/", resultsDir = dir+"Results/";
+			String testFile, trainFile, dir = "data/", resultsDir = "/home/atif/work/TimeSeriesUCR/dtw_results/";
 			while(fileNum < args.length) {
-				System.out.println("Processing " + args[fileNum]);
+//				System.out.println("Processing " + args[fileNum]);
 				
 				testFile =  dir + args[fileNum] + "_TEST";
 				ArrayList<TimeSeries> testing = readData(testFile);
@@ -41,25 +43,28 @@ public class NormalDTW {
 				trainFile =  dir + args[fileNum] + "_TRAIN";
 				ArrayList<TimeSeries> training = readData(trainFile);
 
-				FileWriter fwLengthTime = new FileWriter(resultsDir+args[fileNum]+"_NormalDTW_LengthTimes.csv");
-				BufferedWriter bwLengthTime = new BufferedWriter(fwLengthTime);
-				FileWriter fwAccuracy = new FileWriter(resultsDir+args[fileNum]+"_NormalDTW_Accuracy.csv");
+				FileWriter fwLengthTime = new FileWriter(resultsDir+args[fileNum]+"_DTW_PathLength.csv");
+				BufferedWriter bwLength = new BufferedWriter(fwLengthTime);
+				FileWriter fwAccuracy = new FileWriter(resultsDir+args[fileNum]+"_DTW_Accuracy.csv");
 				BufferedWriter bwAccuracy = new BufferedWriter(fwAccuracy);
+				FileWriter fwTimes = new FileWriter(resultsDir+args[fileNum]+"_DTW_Times.csv");
+				BufferedWriter bwTimes = new BufferedWriter(fwTimes);
+
 				fileNum++;
 
 				DistanceFunction distFn = DistanceFunctionFactory.getDistFnByName("EuclideanDistance");
 				
-				pathLengthAndTimes.append("Window, Test#, Train#, NormLen, MatCalc (ms), DTWNormal (ms)\n");
-				accuracy.append("Window, Test#, Predicted_Class_Normal, Actual_Class\n");
+				pathLengths.append("Window, Test#, Train#, DTW_Length\n");
+				times.append("Window, Test#, Train#, DTW_Time (ms)\n");
+				accuracy.append("Window, Test#, Actual_Class, Predicted_Class\n");
 				
 				for(int window : windowWidth) {
-					System.out.println("Current Window Size: " + window);
-					System.out.println("Testing Set Size: " + testing.size());
+//					System.out.println("Current Window Size: " + window);
+//					System.out.println("Testing Set Size: " + testing.size());
 					for(int i=0; i<testing.size(); i++) {
-						System.out.print(".");
-						if((i+1)%100==0) {
-							System.out.println();
-						}
+//						if(i%100==0) {
+//							System.out.print(i+" ");
+//						}
 						test = testing.get(i);
 
 						bestDist = Double.POSITIVE_INFINITY;
@@ -69,10 +74,6 @@ public class NormalDTW {
 							
 							startTime = System.currentTimeMillis();
 							costMatrix = utils.dtw.DynamicTimeWarping.calculateCostMatrix(test, train, distFn, window);
-							endTime = System.currentTimeMillis();
-							costMatTime = endTime - startTime;
-							
-							startTime = System.currentTimeMillis();
 							infoNorm = utils.dtw.DynamicTimeWarping.getNormalDTW(costMatrix, test.size(), train.size());
 							endTime = System.currentTimeMillis();
 							dtwNormTime = endTime - startTime;
@@ -83,23 +84,25 @@ public class NormalDTW {
 							}
 
 							temp = window + ", " + i + ", " + j + ", ";
-							pathLengthAndTimes.append(temp +
-							                       infoNorm.getWarpPathLength() + ", " +
-							                       costMatTime + ", " + dtwNormTime + "\n");
+							pathLengths.append(temp + dtwNormTime + "\n");
+							times.append(temp + dtwNormTime + "\n");
 
-							bwLengthTime.write(pathLengthAndTimes.toString());
-							pathLengthAndTimes.delete(0, pathLengthAndTimes.length());
+							bwLength.write(pathLengths.toString());
+							pathLengths.delete(0, pathLengths.length());
+							bwTimes.write(times.toString());
+							times.delete(0, times.length());
 						}
 
 						accuracy.append(window + ", " + i + ", " + classPredicted + ", " + test.getTSClass() + "\n");
 						bwAccuracy.write(accuracy.toString());
 						accuracy.delete(0, accuracy.length());
 					}
-					System.out.println();
+//					System.out.println();
 				}
-				bwLengthTime.close();
+				bwLength.close();
 				bwAccuracy.close();
-				System.out.println("Done");
+				bwTimes.close();
+//				System.out.println("Done");
 			}
 		}
 	}

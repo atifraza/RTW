@@ -1,4 +1,5 @@
 /bin
+/data
 *.class
 .classpath
 .project

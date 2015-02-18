@@ -30,10 +30,10 @@ public class HeuristicAccuracy {
 			long timeUniform = 0, timeGaussian = 0;
 
 			int fileNum = 0;
-			String testFile, trainFile, dir = "/home/atif/work/TimeSeriesUCR/", resultsDir = dir+"HeuristicResults/";
+			String testFile, trainFile, dir = "data/", resultsDir = "/home/atif/work/TimeSeriesUCR/HeuristicResults/";
 
 			while(fileNum < args.length) {
-				System.out.println("Processing " + args[fileNum]);
+//				System.out.println("Processing " + args[fileNum]);
 
 				testFile =  dir + args[fileNum] + "_TEST";
 				ArrayList<TimeSeries> testing = readData(testFile);
@@ -56,14 +56,14 @@ public class HeuristicAccuracy {
 				accuracy.append("Run#, Window, Test#, Actual_Class, Predicted_Uniform, Predicted_Gaussian\n");
 
 				for(int instRunNum = 1; instRunNum<=MAX_RUNS_PER_INST; instRunNum++) {
-					System.out.println("Run #: " + instRunNum);
-					System.out.println("Testing Set Size: " + testing.size());
+//					System.out.println("Run #: " + instRunNum);
+//					System.out.println("Testing Set Size: " + testing.size());
 					for(int window : windowWidth) {
-						System.out.println("Current Window Size: " + window);
+//						System.out.println("Current Window Size: " + window);
 						for(int i=0; i<testing.size(); i++) {
-							if(i%100==0) {
-								System.out.print(i+" ");
-							}
+//							if(i%100==0) {
+//								System.out.print(i+" ");
+//							}
 							test = testing.get(i);
 	
 							bestDistUniform = Double.POSITIVE_INFINITY;
@@ -104,10 +104,10 @@ public class HeuristicAccuracy {
 								}
 	
 								pathLengths.append(instRunNum + ", " + window + ", " + i + ", " + j + ", " +
-												   pathLengthUniform + ", " + pathLengthGaussian + ", " + "\n");
+												   pathLengthUniform + ", " + pathLengthGaussian + "\n");
 	
 								times.append(instRunNum + ", " + window + ", " + i + ", " + j + ", " +
-											 timeUniform + ", " + timeGaussian + ", " + "\n");
+											 timeUniform + ", " + timeGaussian + "\n");
 	
 								bwLengths.write(pathLengths.toString());
 								bwTimes.write(times.toString());
@@ -119,13 +119,13 @@ public class HeuristicAccuracy {
 							bwAccuracy.write(accuracy.toString());
 							accuracy.delete(0, accuracy.length());
 						}
-						System.out.println();
+//						System.out.println();
 					}
 				}
 				bwLengths.close();
 				bwAccuracy.close();
 				bwTimes.close();
-				System.out.println("Done");
+//				System.out.println("Done");
 			}
 		}
 	}

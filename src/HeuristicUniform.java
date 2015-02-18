@@ -32,7 +32,7 @@ public class HeuristicUniform {
 			double sumLength, sumTime;
 
 			int fileNum = 0;
-			String testFile, trainFile, dir = "/home/atif/work/TimeSeriesUCR/", resultsDir = dir+"Results/";
+			String testFile, trainFile, dir = "data/", resultsDir = "/home/atif/work/TimeSeriesUCR/Results/";
 			while(fileNum < args.length) {
 				System.out.println("Processing " + args[fileNum]);
 				
