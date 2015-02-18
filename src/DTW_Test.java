@@ -33,22 +33,25 @@ public class DTW_Test {
 			long timeNormal = 0, timeUniform = 0, timeGaussian = 0, timeLucky = 0;
 
 			int fileNum = 0;
-			String testFile, trainFile, dir = "data/", resultsDir = "/home/atif/work/TimeSeriesUCR/Results/";
+			String homeDir = "/home/atif", 
+				   dataDir = homeDir+"/work/data/ucr_timeseries/",
+				   rsltDir = homeDir+"/work/TimeSeriesUCR/Results/",
+				   testFile, trainFile;
 
 			while(fileNum < args.length) {
 				System.out.println("Processing " + args[fileNum]);
 
-				testFile =  dir + args[fileNum] + "_TEST";
+				testFile =  dataDir + args[fileNum] + "_TEST";
 				ArrayList<TimeSeries> testing = readData(testFile);
 
-				trainFile =  dir + args[fileNum] + "_TRAIN";
+				trainFile =  dataDir + args[fileNum] + "_TRAIN";
 				ArrayList<TimeSeries> training = readData(trainFile);
 
-				FileWriter fwLengths = new FileWriter(resultsDir+args[fileNum]+"_PathLengths.csv");
+				FileWriter fwLengths = new FileWriter(rsltDir+args[fileNum]+"_PathLengths.csv");
 				BufferedWriter bwLengths = new BufferedWriter(fwLengths);
-				FileWriter fwAccuracy = new FileWriter(resultsDir+args[fileNum]+"_Accuracy.csv");
+				FileWriter fwAccuracy = new FileWriter(rsltDir+args[fileNum]+"_Accuracy.csv");
 				BufferedWriter bwAccuracy = new BufferedWriter(fwAccuracy);
-				FileWriter fwTimes = new FileWriter(resultsDir+args[fileNum]+"_Times.csv");
+				FileWriter fwTimes = new FileWriter(rsltDir+args[fileNum]+"_Times.csv");
 				BufferedWriter bwTimes = new BufferedWriter(fwTimes);
 				fileNum++;
 

@@ -33,21 +33,25 @@ public class NormalDTW {
 			long dtwNormTime = 0;
 
 			int fileNum = 0;
-			String testFile, trainFile, dir = "data/", resultsDir = "/home/atif/work/TimeSeriesUCR/dtw_results/";
+			String homeDir = "/home/atif", 
+				   dataDir = homeDir+"/work/data/ucr_timeseries/",
+				   rsltDir = homeDir+"/work/TimeSeriesUCR/Results/",
+				   testFile, trainFile;
+			
 			while(fileNum < args.length) {
-//				System.out.println("Processing " + args[fileNum]);
+				System.out.println("Processing " + args[fileNum]);
 				
-				testFile =  dir + args[fileNum] + "_TEST";
+				testFile =  dataDir + args[fileNum] + "_TEST";
 				ArrayList<TimeSeries> testing = readData(testFile);
 
-				trainFile =  dir + args[fileNum] + "_TRAIN";
+				trainFile =  dataDir + args[fileNum] + "_TRAIN";
 				ArrayList<TimeSeries> training = readData(trainFile);
 
-				FileWriter fwLengthTime = new FileWriter(resultsDir+args[fileNum]+"_DTW_PathLength.csv");
+				FileWriter fwLengthTime = new FileWriter(rsltDir+args[fileNum]+"_DTW_PathLength.csv");
 				BufferedWriter bwLength = new BufferedWriter(fwLengthTime);
-				FileWriter fwAccuracy = new FileWriter(resultsDir+args[fileNum]+"_DTW_Accuracy.csv");
+				FileWriter fwAccuracy = new FileWriter(rsltDir+args[fileNum]+"_DTW_Accuracy.csv");
 				BufferedWriter bwAccuracy = new BufferedWriter(fwAccuracy);
-				FileWriter fwTimes = new FileWriter(resultsDir+args[fileNum]+"_DTW_Times.csv");
+				FileWriter fwTimes = new FileWriter(rsltDir+args[fileNum]+"_DTW_Times.csv");
 				BufferedWriter bwTimes = new BufferedWriter(fwTimes);
 
 				fileNum++;
@@ -59,12 +63,12 @@ public class NormalDTW {
 				accuracy.append("Window, Test#, Actual_Class, Predicted_Class\n");
 				
 				for(int window : windowWidth) {
-//					System.out.println("Current Window Size: " + window);
-//					System.out.println("Testing Set Size: " + testing.size());
+					System.out.println("Current Window Size: " + window);
+					System.out.println("Testing Set Size: " + testing.size());
 					for(int i=0; i<testing.size(); i++) {
-//						if(i%100==0) {
-//							System.out.print(i+" ");
-//						}
+						if(i%100==0) {
+							System.out.print(i+" ");
+						}
 						test = testing.get(i);
 
 						bestDist = Double.POSITIVE_INFINITY;
@@ -97,12 +101,12 @@ public class NormalDTW {
 						bwAccuracy.write(accuracy.toString());
 						accuracy.delete(0, accuracy.length());
 					}
-//					System.out.println();
+					System.out.println();
 				}
 				bwLength.close();
 				bwAccuracy.close();
 				bwTimes.close();
-//				System.out.println("Done");
+				System.out.println("Done");
 			}
 		}
 	}

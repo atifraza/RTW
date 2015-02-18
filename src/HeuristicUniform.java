@@ -32,19 +32,23 @@ public class HeuristicUniform {
 			double sumLength, sumTime;
 
 			int fileNum = 0;
-			String testFile, trainFile, dir = "data/", resultsDir = "/home/atif/work/TimeSeriesUCR/Results/";
+			String homeDir = "/home/atif", 
+				   dataDir = homeDir+"/work/data/ucr_timeseries/",
+				   rsltDir = homeDir+"/work/TimeSeriesUCR/Results/",
+				   testFile, trainFile;
+			
 			while(fileNum < args.length) {
 				System.out.println("Processing " + args[fileNum]);
 				
-				testFile =  dir + args[fileNum] + "_TEST";
+				testFile =  dataDir + args[fileNum] + "_TEST";
 				ArrayList<TimeSeries> testing = readData(testFile);
 
-				trainFile =  dir + args[fileNum] + "_TRAIN";
+				trainFile =  dataDir + args[fileNum] + "_TRAIN";
 				ArrayList<TimeSeries> training = readData(trainFile);
 
-				FileWriter fwLengthTime = new FileWriter(resultsDir+args[fileNum]+"_UniformHeuristic_LengthTimes.csv");
+				FileWriter fwLengthTime = new FileWriter(rsltDir+args[fileNum]+"_UniformHeuristic_LengthTimes.csv");
 				BufferedWriter bwLengthTime = new BufferedWriter(fwLengthTime);
-				FileWriter fwAccuracy = new FileWriter(resultsDir+args[fileNum]+"_UniformHeuristic_Accuracy.csv");
+				FileWriter fwAccuracy = new FileWriter(rsltDir+args[fileNum]+"_UniformHeuristic_Accuracy.csv");
 				BufferedWriter bwAccuracy = new BufferedWriter(fwAccuracy);
 				fileNum++;
 
