@@ -9,47 +9,51 @@ import utils.distance.DistanceFunction;
 import utils.distance.DistanceFunctionFactory;
 import utils.dtw.WarpInfo;
 
-public class HeuristicGaussian {
+public class LuckyDTW {
 	public static void main(String[] args) throws Exception {
 		if(args.length<2) {
-			System.err.println("Usage: java HeuristicGaussian WindowSize_INT FileName\n");
+			System.err.println("Usage: java LuckyDTW WindowSize_INT FileName\n");
 			System.err.println("FileName of training and testing set should end with _TRAIN and _TEST e.g. Dataset_TRAIN");
 			System.exit(0);
 		}
-		final int MAX_RUNS_PER_INST = 10;
 		int window = Integer.parseInt(args[0]);
 		String fileName = args[1];
 		TimeSeries test = null, train = null;
-		WarpInfo infoHeu;
+		WarpInfo infoLucky;
 		
 		int classPredicted = 0;
 		double bestDist;
 
-		StringBuilder pathLengthAndTimes = new StringBuilder();
+		StringBuilder pathLengths = new StringBuilder();
 		StringBuilder accuracy = new StringBuilder();
+		StringBuilder times = new StringBuilder();
+		
 		String temp;
 		long startTime, endTime;
-		long heuristicDTWTime = 0;
-		double sumLength, sumTime;
+		long dtwLuckyTime = 0;
 
-		String homeDir = "/home/atif", 
-				   dataDir = homeDir+"/work/data/ucr_timeseries/",
-				   rsltDir = homeDir+"/work/TimeSeriesUCR/Results/",
-				   testFile =  dataDir + fileName + "_TEST",
-				   trainFile =  dataDir + fileName + "_TRAIN";
-			
+		String homeDir = "/home/atifraza", 
+			   dataDir = homeDir+"/work/data/ucr_timeseries/",
+			   rsltDir = homeDir+"/work/results/ucr_timeseries/lucky_dtw/",
+			   testFile =  dataDir + fileName + "_TEST",
+			   trainFile =  dataDir + fileName + "_TRAIN";
+
 		ArrayList<TimeSeries> testing = readData(testFile);
 		ArrayList<TimeSeries> training = readData(trainFile);
 
-		FileWriter fwLengthTime = new FileWriter(rsltDir+fileName+"_GaussianHeuristic_LengthTimes.csv");
-		BufferedWriter bwLengthTime = new BufferedWriter(fwLengthTime);
-		FileWriter fwAccuracy = new FileWriter(rsltDir+fileName+"_GaussianHeuristic_Accuracy.csv");
+		FileWriter fwLength = new FileWriter(rsltDir+fileName+"_Lucky_PathLength.csv");
+		BufferedWriter bwLength = new BufferedWriter(fwLength);
+		FileWriter fwAccuracy = new FileWriter(rsltDir+fileName+"_Lucky_Accuracy.csv");
 		BufferedWriter bwAccuracy = new BufferedWriter(fwAccuracy);
+		FileWriter fwTimes = new FileWriter(rsltDir+fileName+"_Lucky_Times.csv");
+		BufferedWriter bwTimes = new BufferedWriter(fwTimes);
 
 		DistanceFunction distFn = DistanceFunctionFactory.getDistFnByName("EuclideanDistance");
 		
-		pathLengthAndTimes.append("Window (%), Test#, Train#, AvgLen(" + MAX_RUNS_PER_INST + " runs), DTWHeuristic (ms)\n");
-		accuracy.append("Window (%), Test#, Predicted_Class_Uniform, Actual_Class\n");
+		pathLengths.append("Window, Test#, Train#, LuckyDTW_Length\n");
+		times.append("Window, Test#, Train#, LuckyDTW_Time (ms)\n");
+		accuracy.append("Window, Test#, Actual_Class, Predicted_Class\n");
+	
 		System.out.println("Processing " + fileName +
 		                   " Testing Set Size: " + testing.size() +
 		                   " Window Size: " + window + "\n");
@@ -58,40 +62,39 @@ public class HeuristicGaussian {
 				System.out.print(i+" ");
 			}
 			test = testing.get(i);
+
 			bestDist = Double.POSITIVE_INFINITY;
 			classPredicted = 0;
 			for(int j=0; j<training.size(); j++) {
 				train = training.get(j);
 				
-				sumLength = 0;
-				sumTime = 0;
-				for(int instRunNum = 0; instRunNum<MAX_RUNS_PER_INST; instRunNum++) {
-					startTime = System.currentTimeMillis();
-					infoHeu = utils.dtw.DynamicTimeWarping.getHeuristicDTW(test, train, distFn, window, 2);
-					endTime = System.currentTimeMillis();
-					heuristicDTWTime = endTime - startTime;
-					
-					sumTime += heuristicDTWTime;
-					sumLength += infoHeu.getWarpPathLength();
-
-					if(infoHeu.getWarpDistance()<bestDist) {
-						bestDist = infoHeu.getWarpDistance();
-						classPredicted = train.getTSClass();
-					}
+				startTime = System.currentTimeMillis();
+				infoLucky = utils.dtw.DynamicTimeWarping.getLuckyDTW(test, train, distFn, window);
+				endTime = System.currentTimeMillis();
+				dtwLuckyTime = endTime - startTime;
+				
+				if(infoLucky.getWarpDistance()<bestDist) {
+					bestDist = infoLucky.getWarpDistance();
+					classPredicted = train.getTSClass();
 				}
 
 				temp = window + ", " + i + ", " + j + ", ";
-				pathLengthAndTimes.append(temp + sumLength/10 + ", " + sumTime/10 + "\n");
+				pathLengths.append(temp + infoLucky.getWarpPathLength() + "\n");
+				times.append(temp + dtwLuckyTime + "\n");
 
-				bwLengthTime.write(pathLengthAndTimes.toString());
-				pathLengthAndTimes.delete(0, pathLengthAndTimes.length());
+				bwLength.write(pathLengths.toString());
+				pathLengths.delete(0, pathLengths.length());
+				bwTimes.write(times.toString());
+				times.delete(0, times.length());
 			}
-			accuracy.append(window + ", " + i + ", " + classPredicted + ", " + test.getTSClass() + "\n");
+
+			accuracy.append(window + ", " + i + ", " + test.getTSClass() + ", " + classPredicted + "\n");
 			bwAccuracy.write(accuracy.toString());
 			accuracy.delete(0, accuracy.length());
 		}
-		bwLengthTime.close();
+		bwLength.close();
 		bwAccuracy.close();
+		bwTimes.close();
 		System.out.println("Done");
 	}
 	
