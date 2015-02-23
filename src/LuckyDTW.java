@@ -94,7 +94,7 @@ public class LuckyDTW {
 			accuracy.delete(0, accuracy.length());
 		}
 		endTime = System.currentTimeMillis();
-		bwTotalTime.append("Total Time Used (in seconds) for processing the Dataset: " + (endTime-startTime)/1000);
+		bwTotalTime.append("Total Time Used (in seconds) for processing the Dataset: " + (endTime-startTime)/1000.0);
 		bwTotalTime.close();
 		bwLength.close();
 		bwAccuracy.close();

@@ -49,7 +49,7 @@ public class HeuristicAccuracy {
 		BufferedWriter bwAccuracy = new BufferedWriter(fwAccuracy);
 		FileWriter fwTimes = new FileWriter(rsltDir+"Heuristic_"+window+"_"+fileName+"_Times.csv");
 		BufferedWriter bwTimes = new BufferedWriter(fwTimes);
-		FileWriter fwTotalTime = new FileWriter(rsltDir+"Lucky_"+window+"_"+fileName+"_TotalTime.csv");
+		FileWriter fwTotalTime = new FileWriter(rsltDir+"Heuristic_"+window+"_"+fileName+"_TotalTime.csv");
 		BufferedWriter bwTotalTime = new BufferedWriter(fwTotalTime);
 
 		DistanceFunction distFn = DistanceFunctionFactory.getDistFnByName("EuclideanDistance");
@@ -126,7 +126,7 @@ public class HeuristicAccuracy {
 			System.out.println();
 		}
 		endTime = System.currentTimeMillis();
-		bwTotalTime.append("Total Time Used (in seconds) for processing the Dataset: " + (endTime-startTime)/1000);
+		bwTotalTime.append("Total Time Used (in seconds) for processing the Dataset: " + (endTime-startTime)/1000.0);
 		bwTotalTime.close();
 		bwLengths.close();
 		bwAccuracy.close();
