@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import utils.timeseries.TimeSeries;
 import utils.distance.DistanceFunction;
 import utils.distance.DistanceFunctionFactory;
+import utils.dtw.DynamicTimeWarping;
 import utils.dtw.WarpInfo;
 
 public class HeuristicAccuracy {
@@ -43,7 +44,7 @@ public class HeuristicAccuracy {
 		ArrayList<TimeSeries> testing = readData(testFile);
 		ArrayList<TimeSeries> training = readData(trainFile);
 		
-		FileWriter fwLengths = new FileWriter(rsltDir+"Heuristic_"+window+"_"+fileName+"_PathLengths.csv");
+		FileWriter fwLengths = new FileWriter(rsltDir+"Heuristic_"+window+"_"+fileName+"_PathLength.csv");
 		BufferedWriter bwLengths = new BufferedWriter(fwLengths);
 		FileWriter fwAccuracy = new FileWriter(rsltDir+"Heuristic_"+window+"_"+fileName+"_Accuracy.csv");
 		BufferedWriter bwAccuracy = new BufferedWriter(fwAccuracy);
@@ -59,6 +60,7 @@ public class HeuristicAccuracy {
 		accuracy.append("Run#,Window,Test#,Actual_Class,Predicted_Uniform,Predicted_Gaussian\n");
 		
 		startTime = System.currentTimeMillis();
+		DynamicTimeWarping warp = new DynamicTimeWarping(testing.get(0).size(), training.get(0).size());
 		for(int instRunNum = 1; instRunNum<=MAX_RUNS_PER_INST; instRunNum++) {
 			System.out.println("Run #: " + instRunNum);
 			System.out.println("Processing " + fileName +
@@ -86,7 +88,7 @@ public class HeuristicAccuracy {
 					pathLengthGaussian = 0;
 					
 					instStartTime = System.currentTimeMillis();
-					infoUniform = utils.dtw.DynamicTimeWarping.getHeuristicDTW(test, train, distFn, window, 1);
+					infoUniform = warp.getHeuristicDTW(test, train, distFn, window, 1);
 					instEndTime = System.currentTimeMillis();
 					timeUniform += instEndTime - instStartTime;
 					
@@ -97,7 +99,7 @@ public class HeuristicAccuracy {
 					}
 
 					instStartTime = System.currentTimeMillis();
-					infoGaussian = utils.dtw.DynamicTimeWarping.getHeuristicDTW(test, train, distFn, window, 2);
+					infoGaussian = warp.getHeuristicDTW(test, train, distFn, window, 2);
 					instEndTime = System.currentTimeMillis();
 					timeGaussian += instEndTime - instStartTime;
 					

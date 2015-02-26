@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import utils.timeseries.TimeSeries;
 import utils.distance.DistanceFunction;
 import utils.distance.DistanceFunctionFactory;
+import utils.dtw.DynamicTimeWarping;
 import utils.dtw.WarpInfo;
 
 public class DTW_Test {
@@ -61,6 +62,7 @@ public class DTW_Test {
 		System.out.println("Processing " + fileName +
 		                   " Testing Set Size: " + testing.size() +
 		                   " Window Size: " + window + "\n");
+		DynamicTimeWarping warp = new DynamicTimeWarping(testing.get(0).size(), training.get(0).size());
 		for(int i=0; i<testing.size(); i++) {
 			if(i%100==0) {
 				System.out.print(i+" ");
@@ -86,7 +88,7 @@ public class DTW_Test {
 				timeLucky = 0;
 				
 				startTime = System.currentTimeMillis();
-				infoNormal = utils.dtw.DynamicTimeWarping.getNormalDTW(test, train, distFn, window);
+				infoNormal = warp.getNormalDTW(test, train, distFn, window);
 				endTime = System.currentTimeMillis();
 				timeNormal = endTime - startTime;
 				
@@ -96,7 +98,7 @@ public class DTW_Test {
 				}
 
 				startTime = System.currentTimeMillis();
-				infoLucky = utils.dtw.DynamicTimeWarping.getLuckyDTW(test, train, distFn, window);
+				infoLucky = warp.getLuckyDTW(test, train, distFn, window);
 				endTime = System.currentTimeMillis();
 				timeLucky = endTime - startTime;
 				
@@ -110,7 +112,7 @@ public class DTW_Test {
 				
 				for(int instRunNum = 0; instRunNum<MAX_RUNS_PER_INST; instRunNum++) {
 					startTime = System.currentTimeMillis();
-					infoUniform = utils.dtw.DynamicTimeWarping.getHeuristicDTW(test, train, distFn, window, 1);
+					infoUniform = warp.getHeuristicDTW(test, train, distFn, window, 1);
 					endTime = System.currentTimeMillis();
 					timeUniform += endTime - startTime;
 					
@@ -121,7 +123,7 @@ public class DTW_Test {
 					}
 
 					startTime = System.currentTimeMillis();
-					infoGaussian = utils.dtw.DynamicTimeWarping.getHeuristicDTW(test, train, distFn, window, 2);
+					infoGaussian = warp.getHeuristicDTW(test, train, distFn, window, 2);
 					endTime = System.currentTimeMillis();
 					timeGaussian += endTime - startTime;
 					
