@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import utils.timeseries.TimeSeries;
 import utils.distance.DistanceFunction;
 import utils.distance.DistanceFunctionFactory;
+import utils.dtw.DynamicTimeWarping;
 import utils.dtw.WarpInfo;
 
 public class NormalDTW {
@@ -16,92 +17,68 @@ public class NormalDTW {
 			System.err.println("FileName of training and testing set should end with _TRAIN and _TEST e.g. Dataset_TRAIN");
 			System.exit(0);
 		}
+		long startTime, endTime, instStartTime, instEndTime;
+		startTime = System.currentTimeMillis();
 		int window = Integer.parseInt(args[0]);
 		String fileName = args[1];
 		TimeSeries test = null, train = null;
-		double[][] costMatrix = null;
 		WarpInfo infoNorm;
-		
 		int classPredicted = 0;
 		double bestDist;
-		
-		StringBuilder pathLengths = new StringBuilder();
+		StringBuilder calcTimeAndPathLen = new StringBuilder();
 		StringBuilder accuracy = new StringBuilder();
-		StringBuilder times = new StringBuilder();
-		
-		long startTime, endTime, instStartTime, instEndTime;
-		long dtwNormTime = 0;
-		
+		long timeNormal = 0;
 		String homeDir = "/home/atifraza", 
 			   dataDir = homeDir+"/work/data/ucr_timeseries/",
 			   rsltDir = homeDir+"/work/results/ucr_timeseries/normal_dtw/",
 			   testFile =  dataDir + fileName + "_TEST",
 			   trainFile =  dataDir + fileName + "_TRAIN";
-		
 		ArrayList<TimeSeries> testing = readData(testFile);
 		ArrayList<TimeSeries> training = readData(trainFile);
-		
-		FileWriter fwLength = new FileWriter(rsltDir+"DTW_"+window+"_"+fileName+"_PathLength.csv");
-		BufferedWriter bwLength = new BufferedWriter(fwLength);
-		FileWriter fwAccuracy = new FileWriter(rsltDir+"DTW_"+window+"_"+fileName+"_Accuracy.csv");
+		FileWriter fwTimeAndLength = new FileWriter(rsltDir+fileName+"_"+window+"_Normal"+"_PathLength.csv");
+		BufferedWriter bwTimeAndLength = new BufferedWriter(fwTimeAndLength);
+		FileWriter fwAccuracy = new FileWriter(rsltDir+fileName+"_"+window+"_Normal"+"_Accuracy.csv");
 		BufferedWriter bwAccuracy = new BufferedWriter(fwAccuracy);
-		FileWriter fwTimes = new FileWriter(rsltDir+"DTW_"+window+"_"+fileName+"_Times.csv");
-		BufferedWriter bwTimes = new BufferedWriter(fwTimes);
-		FileWriter fwTotalTime = new FileWriter(rsltDir+"DTW_"+window+"_"+fileName+"_TotalTime.csv");
-		BufferedWriter bwTotalTime = new BufferedWriter(fwTotalTime);
-		
 		DistanceFunction distFn = DistanceFunctionFactory.getDistFnByName("EuclideanDistance");
-		
-		pathLengths.append("Window,Test#,Train#,DTW_Length\n");
-		times.append("Window,Test#,Train#,DTW_Time (ms)\n");
+		calcTimeAndPathLen.append("Window,Test#,Train#,CalculationTime (ms),Length (Normal)\n");
 		accuracy.append("Window,Test#,Actual_Class,Predicted_Class\n");
-		
 		System.out.println("Processing " + fileName +
 		                   " Testing Set Size: " + testing.size() +
 		                   " Window Size: " + window + "\n");
-		startTime = System.currentTimeMillis();
+		DynamicTimeWarping warp = new DynamicTimeWarping(testing.get(0).size(), training.get(0).size());
 		for(int i=0; i<testing.size(); i++) {
 			if(i%100==0) {
 				System.out.print(i+" ");
 			}
 			test = testing.get(i);
-			
 			bestDist = Double.POSITIVE_INFINITY;
 			classPredicted = 0;
 			for(int j=0; j<training.size(); j++) {
 				train = training.get(j);
-				
 				instStartTime = System.currentTimeMillis();
-				costMatrix = utils.dtw.DynamicTimeWarping.calculateCostMatrix(test, train, distFn, window);
-				infoNorm = utils.dtw.DynamicTimeWarping.getNormalDTW(costMatrix, test.size(), train.size());
-				instEndTime = System.currentTimeMillis();
-				dtwNormTime = instEndTime - instStartTime;
-				
+				infoNorm = warp.getNormalDTW(test, train, distFn, window);
 				if(infoNorm.getWarpDistance()<bestDist) {
 					bestDist = infoNorm.getWarpDistance();
 					classPredicted = train.getTSClass();
 				}
-				
-				pathLengths.append(window + "," + i + "," + j + "," + infoNorm.getWarpPathLength() + "\n");
-				times.append(window + "," + i + "," + j + "," + dtwNormTime + "\n");
-
-				bwLength.write(pathLengths.toString());
-				pathLengths.delete(0, pathLengths.length());
-				bwTimes.write(times.toString());
-				times.delete(0, times.length());
+				instEndTime = System.currentTimeMillis();
+				timeNormal = instEndTime - instStartTime;
+				calcTimeAndPathLen.append(window + "," + i + "," + j + "," + timeNormal+ "," + infoNorm.getWarpPathLength() + "\n");
+				bwTimeAndLength.write(calcTimeAndPathLen.toString());
+				calcTimeAndPathLen.delete(0, calcTimeAndPathLen.length());
 			}
-
 			accuracy.append(window + "," + i + "," + test.getTSClass() + "," + classPredicted + "\n");
 			bwAccuracy.write(accuracy.toString());
 			accuracy.delete(0, accuracy.length());
 		}
-		endTime = System.currentTimeMillis();
-		bwTotalTime.append("Total Time Used (in seconds) for processing the Dataset: " + (endTime-startTime)/1000);
-		bwTotalTime.close();
-		bwLength.close();
+		bwTimeAndLength.close();
 		bwAccuracy.close();
-		bwTimes.close();
 		System.out.println("Done");
+		FileWriter fwTotalTime = new FileWriter(rsltDir+fileName+"_"+window+"_Normal"+"_TotalTime.csv");
+		BufferedWriter bwTotalTime = new BufferedWriter(fwTotalTime);
+		endTime = System.currentTimeMillis();
+		bwTotalTime.append((endTime-startTime)/1000 + "\n");
+		bwTotalTime.close();
 	}
 	
 	public static ArrayList<TimeSeries> readData(String inFile ) {
