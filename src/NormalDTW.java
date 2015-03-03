@@ -1,6 +1,6 @@
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.BufferedWriter;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
 
@@ -28,14 +28,14 @@ public class NormalDTW {
 		StringBuilder calcTimeAndPathLen = new StringBuilder();
 		StringBuilder accuracy = new StringBuilder();
 		long timeNormal = 0;
-		String homeDir = "/home/atifraza", 
+		String homeDir = System.getProperty("user.home"), //"/home/atifraza", 
 			   dataDir = homeDir+"/work/data/ucr_timeseries/",
-			   rsltDir = homeDir+"/work/results/ucr_timeseries/normal_dtw/",
-			   testFile =  dataDir + fileName + "_TEST",
-			   trainFile =  dataDir + fileName + "_TRAIN";
+			   rsltDir = homeDir+"/work/results/ucr_timeseries/",
+			   testFile = dataDir + fileName + "_TEST",
+			   trainFile = dataDir + fileName + "_TRAIN";
 		ArrayList<TimeSeries> testing = readData(testFile);
 		ArrayList<TimeSeries> training = readData(trainFile);
-		FileWriter fwTimeAndLength = new FileWriter(rsltDir+fileName+"_"+window+"_Normal"+"_PathLength.csv");
+		FileWriter fwTimeAndLength = new FileWriter(rsltDir+fileName+"_"+window+"_Normal"+"_Time_Length.csv");
 		BufferedWriter bwTimeAndLength = new BufferedWriter(fwTimeAndLength);
 		FileWriter fwAccuracy = new FileWriter(rsltDir+fileName+"_"+window+"_Normal"+"_Accuracy.csv");
 		BufferedWriter bwAccuracy = new BufferedWriter(fwAccuracy);
@@ -46,9 +46,15 @@ public class NormalDTW {
 		                   " Testing Set Size: " + testing.size() +
 		                   " Window Size: " + window + "\n");
 		DynamicTimeWarping warp = new DynamicTimeWarping(testing.get(0).size(), training.get(0).size());
+		// warm up function call
+		infoNorm = warp.getNormalDTW(testing.get(0), training.get(0), distFn, window);
 		for(int i=0; i<testing.size(); i++) {
 			if(i%100==0) {
 				System.out.print(i+" ");
+				bwTimeAndLength.write(calcTimeAndPathLen.toString());
+				calcTimeAndPathLen.delete(0, calcTimeAndPathLen.length());
+				bwAccuracy.write(accuracy.toString());
+				accuracy.delete(0, accuracy.length());
 			}
 			test = testing.get(i);
 			bestDist = Double.POSITIVE_INFINITY;
@@ -64,13 +70,13 @@ public class NormalDTW {
 				instEndTime = System.currentTimeMillis();
 				timeNormal = instEndTime - instStartTime;
 				calcTimeAndPathLen.append(window + "," + i + "," + j + "," + timeNormal+ "," + infoNorm.getWarpPathLength() + "\n");
-				bwTimeAndLength.write(calcTimeAndPathLen.toString());
-				calcTimeAndPathLen.delete(0, calcTimeAndPathLen.length());
 			}
 			accuracy.append(window + "," + i + "," + test.getTSClass() + "," + classPredicted + "\n");
-			bwAccuracy.write(accuracy.toString());
-			accuracy.delete(0, accuracy.length());
 		}
+		bwTimeAndLength.write(calcTimeAndPathLen.toString());
+		calcTimeAndPathLen.delete(0, calcTimeAndPathLen.length());
+		bwAccuracy.write(accuracy.toString());
+		accuracy.delete(0, accuracy.length());
 		bwTimeAndLength.close();
 		bwAccuracy.close();
 		System.out.println("Done");
