@@ -29,14 +29,14 @@ public class HeuristicUniform {
 		StringBuilder calcTimeAndPathLen = new StringBuilder();
 		StringBuilder accuracy = new StringBuilder();
 		long timeHeuristic = 0, bestPathLength = 0;
-		String homeDir = "/home/atif", 
+		String homeDir = System.getProperty("user.home"), //"/home/atifraza", 
 			   dataDir = homeDir+"/work/data/ucr_timeseries/",
-			   rsltDir = homeDir+"/work/TimeSeriesUCR/Results/",
-			   testFile =  dataDir + fileName + "_TEST",
-			   trainFile =  dataDir + fileName + "_TRAIN";
+			   rsltDir = homeDir+"/work/results/ucr_timeseries/",
+			   testFile = dataDir + fileName + "_TEST",
+			   trainFile = dataDir + fileName + "_TRAIN";
 		ArrayList<TimeSeries> testing = readData(testFile);
 		ArrayList<TimeSeries> training = readData(trainFile);
-		FileWriter fwTimeAndLength = new FileWriter(rsltDir+fileName+"_"+window+"_Uniform"+"_PathLength.csv");
+		FileWriter fwTimeAndLength = new FileWriter(rsltDir+fileName+"_"+window+"_Uniform"+"_Time_Length.csv");
 		BufferedWriter bwTimeAndLength = new BufferedWriter(fwTimeAndLength);
 		FileWriter fwAccuracy = new FileWriter(rsltDir+fileName+"_"+window+"_Uniform"+"_Accuracy.csv");
 		BufferedWriter bwAccuracy = new BufferedWriter(fwAccuracy);
@@ -47,11 +47,17 @@ public class HeuristicUniform {
 		                   " Testing Set Size: " + testing.size() +
 		                   " Window Size: " + window + "\n");
 		DynamicTimeWarping warp = new DynamicTimeWarping(testing.get(0).size(), training.get(0).size());
+		// warm up function call
+		infoHeu = warp.getHeuristicDTW(testing.get(0), training.get(0), distFn, window, 1);
 		for(int runNum = 1; runNum <= maxRunsTotal; runNum++) {
-			System.out.println("Run #: " + runNum);
+			System.out.println("\nRun #: " + runNum);
 			for(int i=0; i<testing.size(); i++) {
 				if(i%100==0) {
 					System.out.print(i+" ");
+					bwTimeAndLength.write(calcTimeAndPathLen.toString());
+					calcTimeAndPathLen.delete(0, calcTimeAndPathLen.length());
+					bwAccuracy.write(accuracy.toString());
+					accuracy.delete(0, accuracy.length());
 				}
 				test = testing.get(i);
 				bestDist = Double.POSITIVE_INFINITY;
@@ -70,17 +76,17 @@ public class HeuristicUniform {
 					instEndTime = System.currentTimeMillis();
 					timeHeuristic = instEndTime - instStartTime;
 					calcTimeAndPathLen.append(runNum+","+window+","+i+","+j+","+","+timeHeuristic+bestPathLength+"\n");
-					bwTimeAndLength.write(calcTimeAndPathLen.toString());
-					calcTimeAndPathLen.delete(0, calcTimeAndPathLen.length());
 				}
 				accuracy.append(runNum+","+window+","+i+","+test.getTSClass()+","+classPredicted+"\n");
-				bwAccuracy.write(accuracy.toString());
-				accuracy.delete(0, accuracy.length());
 			}
 		}
+		bwTimeAndLength.write(calcTimeAndPathLen.toString());
+		calcTimeAndPathLen.delete(0, calcTimeAndPathLen.length());
+		bwAccuracy.write(accuracy.toString());
+		accuracy.delete(0, accuracy.length());
 		bwTimeAndLength.close();
 		bwAccuracy.close();
-		System.out.println("Done");
+		System.out.println("\nDone");
 		FileWriter fwTotalTime = new FileWriter(rsltDir+fileName+"_"+window+"_Uniform"+"_TotalTime.csv");
 		BufferedWriter bwTotalTime = new BufferedWriter(fwTotalTime);
 		endTime = System.currentTimeMillis();
