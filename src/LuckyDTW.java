@@ -56,7 +56,7 @@ public class LuckyDTW {
 				bwAccuracy.write(accuracy.toString());
 				accuracy.delete(0, accuracy.length());
 			}
-			test = testing.get(i);			
+			test = testing.get(i);
 			bestDist = Double.POSITIVE_INFINITY;
 			classPredicted = 0;
 			for(int j=0; j<training.size(); j++) {
@@ -66,14 +66,13 @@ public class LuckyDTW {
 				if(infoLucky.getWarpDistance()<bestDist) {
 					bestDist = infoLucky.getWarpDistance();
 					classPredicted = train.getTSClass();
-				}				
+				}
 				instEndTime = System.currentTimeMillis();
 				timeLucky = instEndTime - instStartTime;
 				calcTimeAndPathLen.append(window+","+i+","+j+","+timeLucky+","+infoLucky.getWarpPathLength()+"\n");
 			}
 			accuracy.append(window+","+i+","+test.getTSClass()+","+classPredicted+"\n");
 		}
-		endTime = System.currentTimeMillis();
 		bwTimeAndLength.write(calcTimeAndPathLen.toString());
 		calcTimeAndPathLen.delete(0, calcTimeAndPathLen.length());
 		bwAccuracy.write(accuracy.toString());
@@ -83,6 +82,7 @@ public class LuckyDTW {
 		System.out.println("Done");
 		FileWriter fwTotalTime = new FileWriter(rsltDir+fileName+"_"+window+"_Lucky"+"_TotalTime.csv");
 		BufferedWriter bwTotalTime = new BufferedWriter(fwTotalTime);
+		endTime = System.currentTimeMillis();
 		bwTotalTime.append((endTime-startTime)/1000.0 + "\n");
 		bwTotalTime.close();
 	}

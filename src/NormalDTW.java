@@ -69,9 +69,9 @@ public class NormalDTW {
 				}
 				instEndTime = System.currentTimeMillis();
 				timeNormal = instEndTime - instStartTime;
-				calcTimeAndPathLen.append(window + "," + i + "," + j + "," + timeNormal+ "," + infoNorm.getWarpPathLength() + "\n");
+				calcTimeAndPathLen.append(window+","+i+","+j+","+timeNormal+","+infoNorm.getWarpPathLength()+"\n");
 			}
-			accuracy.append(window + "," + i + "," + test.getTSClass() + "," + classPredicted + "\n");
+			accuracy.append(window+","+i+","+test.getTSClass()+","+classPredicted+"\n");
 		}
 		bwTimeAndLength.write(calcTimeAndPathLen.toString());
 		calcTimeAndPathLen.delete(0, calcTimeAndPathLen.length());
@@ -79,11 +79,11 @@ public class NormalDTW {
 		accuracy.delete(0, accuracy.length());
 		bwTimeAndLength.close();
 		bwAccuracy.close();
-		System.out.println("Done");
+		System.out.println("\nDone");
 		FileWriter fwTotalTime = new FileWriter(rsltDir+fileName+"_"+window+"_Normal"+"_TotalTime.csv");
 		BufferedWriter bwTotalTime = new BufferedWriter(fwTotalTime);
 		endTime = System.currentTimeMillis();
-		bwTotalTime.append((endTime-startTime)/1000 + "\n");
+		bwTotalTime.append((endTime-startTime)/1000.0 + "\n");
 		bwTotalTime.close();
 	}
 	
