@@ -18,7 +18,7 @@ public class LuckyDTW {
 			System.exit(0);
 		}
 		long startTime, endTime, instStartTime, instEndTime;
-		startTime = System.currentTimeMillis();		
+		startTime = System.currentTimeMillis();
 		int window = Integer.parseInt(args[0]);
 		String fileName = args[1];
 		TimeSeries test = null, train = null;
@@ -28,14 +28,14 @@ public class LuckyDTW {
 		StringBuilder calcTimeAndPathLen = new StringBuilder();
 		StringBuilder accuracy = new StringBuilder();
 		long timeLucky = 0;
-		String homeDir = "/home/atifraza", 
+		String homeDir = System.getProperty("user.home"), //"/home/atifraza", 
 			   dataDir = homeDir+"/work/data/ucr_timeseries/",
-			   rsltDir = homeDir+"/work/results/ucr_timeseries/lucky_dtw/",
-			   testFile =  dataDir + fileName + "_TEST",
-			   trainFile =  dataDir + fileName + "_TRAIN";
+			   rsltDir = homeDir+"/work/results/ucr_timeseries/",
+			   testFile = dataDir + fileName + "_TEST",
+			   trainFile = dataDir + fileName + "_TRAIN";
 		ArrayList<TimeSeries> testing = readData(testFile);
 		ArrayList<TimeSeries> training = readData(trainFile);
-		FileWriter fwTimeAndLength = new FileWriter(rsltDir+fileName+"_"+window+"_Lucky"+"_PathLength.csv");
+		FileWriter fwTimeAndLength = new FileWriter(rsltDir+fileName+"_"+window+"_Lucky"+"_Time_Length.csv");
 		BufferedWriter bwTimeAndLength = new BufferedWriter(fwTimeAndLength);
 		FileWriter fwAccuracy = new FileWriter(rsltDir+fileName+"_"+window+"_Lucky"+"_Accuracy.csv");
 		BufferedWriter bwAccuracy = new BufferedWriter(fwAccuracy);
@@ -46,9 +46,15 @@ public class LuckyDTW {
 		                   " Testing Set Size: " + testing.size() +
 		                   " Window Size: " + window + "\n");
 		DynamicTimeWarping warp = new DynamicTimeWarping(testing.get(0).size(), training.get(0).size());
+		// warm up function call
+		infoLucky = warp.getLuckyDTW(testing.get(0), training.get(0), distFn, window);
 		for(int i=0; i<testing.size(); i++) {
 			if(i%100==0) {
 				System.out.print(i+" ");
+				bwTimeAndLength.write(calcTimeAndPathLen.toString());
+				calcTimeAndPathLen.delete(0, calcTimeAndPathLen.length());
+				bwAccuracy.write(accuracy.toString());
+				accuracy.delete(0, accuracy.length());
 			}
 			test = testing.get(i);			
 			bestDist = Double.POSITIVE_INFINITY;
@@ -64,14 +70,14 @@ public class LuckyDTW {
 				instEndTime = System.currentTimeMillis();
 				timeLucky = instEndTime - instStartTime;
 				calcTimeAndPathLen.append(window+","+i+","+j+","+timeLucky+","+infoLucky.getWarpPathLength()+"\n");
-				bwTimeAndLength.write(calcTimeAndPathLen.toString());
-				calcTimeAndPathLen.delete(0, calcTimeAndPathLen.length());
 			}
 			accuracy.append(window+","+i+","+test.getTSClass()+","+classPredicted+"\n");
-			bwAccuracy.write(accuracy.toString());
-			accuracy.delete(0, accuracy.length());
 		}
 		endTime = System.currentTimeMillis();
+		bwTimeAndLength.write(calcTimeAndPathLen.toString());
+		calcTimeAndPathLen.delete(0, calcTimeAndPathLen.length());
+		bwAccuracy.write(accuracy.toString());
+		accuracy.delete(0, accuracy.length());
 		bwTimeAndLength.close();
 		bwAccuracy.close();
 		System.out.println("Done");
