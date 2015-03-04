@@ -75,7 +75,7 @@ public class HeuristicUniform {
 					}
 					instEndTime = System.currentTimeMillis();
 					timeHeuristic = instEndTime - instStartTime;
-					calcTimeAndPathLen.append(runNum+","+window+","+i+","+j+","+","+timeHeuristic+bestPathLength+"\n");
+					calcTimeAndPathLen.append(runNum+","+window+","+i+","+j+","+timeHeuristic+","+bestPathLength+"\n");
 				}
 				accuracy.append(runNum+","+window+","+i+","+test.getTSClass()+","+classPredicted+"\n");
 			}
