@@ -12,6 +12,7 @@ import utils.dtw.WarpInfo;
 
 public class DynamicTimeWarping {
 	private double[][] costMatrix;
+	private Random rand;
 	
 	public DynamicTimeWarping() {
 		
@@ -19,6 +20,7 @@ public class DynamicTimeWarping {
 	
 	public DynamicTimeWarping(int szI, int szJ) {
 		costMatrix = new double[szI][szJ];
+		rand = new Random();
 	}
 	
 	public WarpInfo getHeuristicDTW(TimeSeries tsI, TimeSeries tsJ, DistanceFunction distFn, int windowPercent, int distribution) {
@@ -27,9 +29,7 @@ public class DynamicTimeWarping {
 		int i = 0;						// Current index number for TimeSeries I
 		int j = 0;						// Current index number for TimeSeries J
 		double epsilon = 1e-9, epsilon3x = 3e-9;
-		double STD_DEV = 1.0/3, VARIANCE = STD_DEV*STD_DEV, MEAN = 1;
-		
-		Random rand = new Random();
+		double MEAN = 1, STD_DEV = 1.0/3;//, VARIANCE = STD_DEV*STD_DEV;
 
 		WarpInfo info = new WarpInfo();	// Warping Path info (e.g. length and path indices)
 		
@@ -79,11 +79,12 @@ public class DynamicTimeWarping {
 					// the random number is between 0 and 1 so we multiply it with
 					// 2 to get it between 0 and 2 
 				} else {
-					selProb = MEAN + rand.nextGaussian()*VARIANCE;	// generate a normally distributed
+					//selProb = MEAN + rand.nextGaussian()*VARIANCE;	// generate a normally distributed
+					selProb = MEAN + rand.nextGaussian()*STD_DEV;	// generate a normally distributed
 					// random number, it has a mean at 0 and a std of 1, so we add MEAN to it
 					// to shift it's mean to 1 and multiply it with VARIANCE to generate random numbers
 					// within required Standard Deviation
-					if (selProb <0 || selProb >=2) {
+					if (selProb <0 || selProb >2) {
 						continue;
 					}
 				}
