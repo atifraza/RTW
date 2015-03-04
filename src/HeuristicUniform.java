@@ -17,9 +17,9 @@ public class HeuristicUniform {
 			System.err.println("FileName of training and testing set should end with _TRAIN and _TEST e.g. Dataset_TRAIN");
 			System.exit(0);
 		}
-		long startTime, endTime, instStartTime, instEndTime;
+		long startTime, endTime, instStartTime, instEndTime, runStartTime, runEndTime;
 		startTime = System.currentTimeMillis();
-		final int maxRunsTotal = 10, maxRunsPerInst = 10;
+		final int maxRunsTotal = 10;//, maxRunsPerInst = 10;
 		int window = Integer.parseInt(args[0]);
 		String fileName = args[1];
 		TimeSeries test = null, train = null;
@@ -40,6 +40,11 @@ public class HeuristicUniform {
 		BufferedWriter bwTimeAndLength = new BufferedWriter(fwTimeAndLength);
 		FileWriter fwAccuracy = new FileWriter(rsltDir+fileName+"_"+window+"_Uniform"+"_Accuracy.csv");
 		BufferedWriter bwAccuracy = new BufferedWriter(fwAccuracy);
+		
+		FileWriter fwRunTime = new FileWriter(rsltDir+fileName+"_"+window+"_Uniform"+"_RunTime.csv");
+		BufferedWriter bwRunTime = new BufferedWriter(fwRunTime);
+		bwRunTime.write("Run#,Time\n");
+		
 		DistanceFunction distFn = DistanceFunctionFactory.getDistFnByName("EuclideanDistance");
 		calcTimeAndPathLen.append("Run#,Window,Test#,Train#,CalculationTime (ms),Length (Uniform)\n");
 		accuracy.append("Run#,Window,Test#,Actual_Class,Predicted_Uniform\n");
@@ -50,6 +55,7 @@ public class HeuristicUniform {
 		// warm up function call
 		infoHeu = warp.getHeuristicDTW(testing.get(0), training.get(0), distFn, window, 1);
 		for(int runNum = 1; runNum <= maxRunsTotal; runNum++) {
+			runStartTime = System.currentTimeMillis();
 			System.out.println("\nRun #: " + runNum);
 			for(int i=0; i<testing.size(); i++) {
 				if(i%100==0) {
@@ -65,7 +71,8 @@ public class HeuristicUniform {
 				for(int j=0; j<training.size(); j++) {
 					train = training.get(j);
 					instStartTime = System.currentTimeMillis();
-					for(int instRunNum = 0; instRunNum<maxRunsPerInst; instRunNum++) {
+//					for(int instRunNum = 0; instRunNum<maxRunsPerInst; instRunNum++) {
+					for(int instRunNum = 0; instRunNum<runNum; instRunNum++) {
 						infoHeu = warp.getHeuristicDTW(test, train, distFn, window, 1);
 						if(infoHeu.getWarpDistance()<bestDist) {
 							bestDist = infoHeu.getWarpDistance();
@@ -79,7 +86,10 @@ public class HeuristicUniform {
 				}
 				accuracy.append(runNum+","+window+","+i+","+test.getTSClass()+","+classPredicted+"\n");
 			}
+			runEndTime = System.currentTimeMillis();
+			bwRunTime.write(runNum + "," + (runEndTime-runStartTime)/1000.0 + "\n");
 		}
+		bwRunTime.close();
 		bwTimeAndLength.write(calcTimeAndPathLen.toString());
 		calcTimeAndPathLen.delete(0, calcTimeAndPathLen.length());
 		bwAccuracy.write(accuracy.toString());
