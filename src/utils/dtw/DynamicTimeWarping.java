@@ -226,11 +226,11 @@ public class DynamicTimeWarping {
 	public WarpInfo getNormalDTW(TimeSeries tsI, TimeSeries tsJ, DistanceFunction distFn, int windowPercent) {
 		int maxI = tsI.size();
 		int maxJ = tsJ.size();
+		for(double[] current : costMatrix) {
+			Arrays.fill(current, Double.POSITIVE_INFINITY);
+		}
 		if(windowPercent<100) {
 			int w = Math.max( (int) Math.ceil( windowPercent*maxI/100.0 ), Math.abs(maxI-maxJ) );
-			for(double[] current : costMatrix) {
-				Arrays.fill(current, Double.POSITIVE_INFINITY);
-			}
 			costMatrix[0][0] = distFn.calcDistance(tsI.get(0), tsJ.get(0));
 			for(int j=1; j<w; j++) {
 				costMatrix[0][j] = costMatrix[0][j-1] + distFn.calcDistance(tsI.get(0), tsJ.get(j));
