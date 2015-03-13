@@ -28,20 +28,23 @@ public class DynamicTimeWarping {
 		int maxJ = tsJ.size();			// maximum index number for TimeSeries J
 		int i = 0;						// Current index number for TimeSeries I
 		int j = 0;						// Current index number for TimeSeries J
-		double epsilon = 1e-9, epsilon3x = 3e-9;
-		double MEAN = 1, STD_DEV = 1.0/3;//, VARIANCE = STD_DEV*STD_DEV;
+		double MEAN = 1.0, STD_DEV = 1.0/3.0;//, VARIANCE = STD_DEV*STD_DEV;
 
 		WarpInfo info = new WarpInfo();	// Warping Path info (e.g. length and path indices)
 		
 		double costDiag, costRight, costDown;	// cost variables for prospective successive directions 
 		double costSum;							// cumulative cost 
 		
-		double[] probs = new double[3];			// Used to save the probabilities of the direction to take
+		double[] probs = new double[2];			// Used to save the probabilities of the direction to take
 		double selProb;							// Selection probability
 		boolean isValidCellChosen;
 
-		// window size for calculation of cost matrix entries
-		int w = Math.max( (int) Math.ceil( windowPercent*maxI/100.0 ), Math.abs(maxI-maxJ));
+		int w;	// window size for calculation of cost matrix entries if windowSize is zero we got to a 1 length window equal to euclidean dist
+		if (windowPercent == 0) {
+			w = 1;
+		} else {
+			w = Math.max( (int) Math.ceil( windowPercent*maxI/100.0 ), Math.abs(maxI-maxJ));
+		}
 		
 		for(double[] current : costMatrix) {	// Assign positive infinity to entire matrix
 			Arrays.fill(current, Double.POSITIVE_INFINITY);
@@ -50,58 +53,63 @@ public class DynamicTimeWarping {
 		costMatrix[0][0] = distFn.calcDistance(tsI.get(i), tsJ.get(j));
 		info.addLast(i, j);
 		while(i<maxI && j<maxJ) {
-			if(i+1<maxI && j+1<maxJ) {
+			if(i+1<maxI && j+1<maxJ) {		// Check if move to diagonal element is valid
 				costDiag = distFn.calcDistance(tsI.get(i+1), tsJ.get(j+1));
 			} else {
 				costDiag = 1e12;
 			}
 			//if(i+1<maxI && Math.abs(i+1-j)<w) { // OLD Conditional, following is better to understand
-			if(i+1<Math.min(w+j, maxI)) {
+			if(i+1<Math.min(w+j, maxI)) {	// Check if moving downwards is valid
 				costDown = distFn.calcDistance(tsI.get(i+1), tsJ.get(j));
 			} else {
 				costDown = 1e12;
 			}
 			//if(j+1<maxJ && Math.abs(j+1-i)<maxI) { // OLD Conditional, following is better to understand
-			if(j+1<Math.min(w+i, maxJ)) {
+			if(j+1<Math.min(w+i, maxJ)) {	// Check if moving right is valid
 				costRight = distFn.calcDistance(tsI.get(i), tsJ.get(j+1));
 			} else {
 				costRight = 1e12;
 			}
-			costSum = costDiag+costRight+costDown;
 			isValidCellChosen = false;
-//			Arrays.fill(probs, 0);				// always reinitialize the array to all zeros
+			double epsilon = 1e-9, epsilon3x = 3e-9;
+			costSum = costDiag+costRight+costDown;
 			probs[0] = (costSum-costRight+epsilon) / (costSum + epsilon3x);
 			probs[1] = (costSum-costDiag+epsilon) / (costSum + epsilon3x) + probs[0];
-			probs[2] = (costSum-costDown+epsilon) / (costSum + epsilon3x) + probs[1];
-			while(!isValidCellChosen) {
+			while(!isValidCellChosen) {		// loop used for times when we are at the end of warping path but a valid cell can't be chosen
 				if (distribution == 1) {
-					selProb = rand.nextDouble() * 2;	// generate a uniform random number
+					selProb = rand.nextDouble() * 2.0;	// generate a uniform random number
 					// the random number is between 0 and 1 so we multiply it with
 					// 2 to get it between 0 and 2 
 				} else {
-					//selProb = MEAN + rand.nextGaussian()*VARIANCE;	// generate a normally distributed
 					selProb = MEAN + rand.nextGaussian()*STD_DEV;	// generate a normally distributed
 					// random number, it has a mean at 0 and a std of 1, so we add MEAN to it
-					// to shift it's mean to 1 and multiply it with VARIANCE to generate random numbers
-					// within required Standard Deviation
-					if (selProb <0 || selProb >2) {
-						continue;
-					}
+					// to shift it's mean to 1 and multiply it with STANDARD DEVIATION to generate random
+					// numbers within required Standard Deviation
+					// Previously we were checking the selProb each time we got a random number and
+					// restricted it between 0 and 2 however it was counterproductive. because we were only
+					// basing our decision on whether the number was < or > a given probability so even if
+					// it turns out to be < 0 or > 2, it still is a good number to base our decision
 				}
-				if(selProb <= probs[0] && i<maxI && j+1<maxJ) {
+				// Previously, we are checking if the selProb was <= probs[0] then we chose to go right.
+				// If selProb was > probs[0] but <= probs[1] we moved to the diagonal.
+				// and if it was > probs[1] as well we moved to the down ward location
+				// however that was inefficient. now we are generating 2 probabilities instead of 3 and
+				// only check for the selProb be to < probs[0] to go right or > probs[1] to go down and
+				// to go diagonally if none of the 2 cases are true
+				if(selProb < probs[0] && i<maxI && j+1<maxJ && j+1<j+w) {	// j+1<j+w added to restrict going out of window
 					// Moving one cell Right
 					costMatrix[i][j+1] = costMatrix[i][j] + costRight;
 					j++;
 					isValidCellChosen = true;
-				} else if(selProb <= probs[1] && i+1<maxI && j+1<maxJ) {
-					// Moving diagonally
-					costMatrix[i+1][j+1] = costMatrix[i][j] + costDiag;
-					i++; j++;
-					isValidCellChosen = true;
-				} else if(selProb <= probs[2] && i+1<maxI && j<maxJ) {
+				} else if(selProb > probs[1] && i+1<maxI && j<maxJ && i+1<i+w) {	// i+1<i+w added to restrict going out of window
 					// Moving one cell Down
 					costMatrix[i+1][j] = costMatrix[i][j] + costDown;
 					i++;
+					isValidCellChosen = true;
+				} else if(i+1<maxI && j+1<maxJ) {			// OLD Condition selProb <= probs[1] && i+1<maxI && j+1<maxJ 
+					// Moving diagonally
+					costMatrix[i+1][j+1] = costMatrix[i][j] + costDiag;
+					i++; j++;
 					isValidCellChosen = true;
 				}
 				if(isValidCellChosen) {
@@ -109,52 +117,8 @@ public class DynamicTimeWarping {
 					Arrays.fill(probs, 0);				// reinitialize the probs array to all zeros
 					break;
 				}
-//				for (int ind = 0; ind < probs.length; ind++) {
-//					if (selProb <= probs[ind]) {
-//						switch (ind) {
-//							case 0:	{
-//								if(i<maxI && j+1<maxJ) {		// Moving one cell Right
-//									costMatrix[i][j+1] = costMatrix[i][j] + costRight;
-//									j++;
-//									isValidCellChosen = true;
-//								}
-//								break;
-//							}
-//							case 1:	{
-//								if(i+1<maxI && j+1<maxJ) {		// Moving diagonally
-//									costMatrix[i+1][j+1] = costMatrix[i][j] + costDiag;
-//									i++; j++;
-//									isValidCellChosen = true;
-//								}
-//								break;
-//							}
-//							case 2:	{
-//								if(i+1<maxI && j<maxJ) {		// Moving one cell Down
-//									costMatrix[i+1][j] = costMatrix[i][j] + costDown;
-//									i++;
-//									isValidCellChosen = true;
-//								}
-//								break;
-//							}
-//						}
-//						if(isValidCellChosen) {
-//							info.addLast(i, j);
-//							break;
-//						}
-//					}
-//				}				
 			}
 			if(i+1==maxI && j+1==maxJ) {
-//				DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.ENGLISH);
-//				symbols.setInfinity("∞");
-//				DecimalFormat decimalFormat = new DecimalFormat("#.#", symbols);
-//				System.out.print("\n\n\n");
-//				for(int row = 0; row<maxI; row++) {
-//					for (int col = 0; col<maxJ; col++) {
-//						System.out.print(decimalFormat.format(costMatrix[row][col]) + "\t");
-//					}
-//					System.out.println();
-//				}
 				info.setWarpDistance(costMatrix[i][j]);
 				break;
 			}
@@ -170,8 +134,14 @@ public class DynamicTimeWarping {
 		WarpInfo info = new WarpInfo();	// Warping Path info (e.g. length and path indices)
 		
 		double costDiag, costRight, costDown;	// cost variables for prospective successive directions 
-		// window size for calculation of cost matrix entries
-		int w = Math.max( (int) Math.ceil( windowPercent*maxI/100.0 ), Math.abs(maxI-maxJ));
+		
+		int w;	// window size for calculation of cost matrix entries if windowSize is zero we got to a 1 length window equal to euclidean dist
+		if (windowPercent == 0) {
+			w = 1;
+		} else {
+			w = Math.max( (int) Math.ceil( windowPercent*maxI/100.0 ), Math.abs(maxI-maxJ));
+		}
+		
 		for(double[] current : costMatrix) {	// Assign positive infinity to entire matrix
 			Arrays.fill(current, Double.POSITIVE_INFINITY);
 		}
@@ -230,7 +200,13 @@ public class DynamicTimeWarping {
 			Arrays.fill(current, Double.POSITIVE_INFINITY);
 		}
 		if(windowPercent<100) {
-			int w = Math.max( (int) Math.ceil( windowPercent*maxI/100.0 ), Math.abs(maxI-maxJ) );
+			int w;	// window size for calculation of cost matrix entries if windowSize is zero we got to a 1 length window equal to euclidean dist
+			if (windowPercent == 0) {
+				w = 1;
+			} else {
+				w = Math.max( (int) Math.ceil( windowPercent*maxI/100.0 ), Math.abs(maxI-maxJ));
+			}
+
 			costMatrix[0][0] = distFn.calcDistance(tsI.get(0), tsJ.get(0));
 			for(int j=1; j<w; j++) {
 				costMatrix[0][j] = costMatrix[0][j-1] + distFn.calcDistance(tsI.get(0), tsJ.get(j));
