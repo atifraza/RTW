@@ -71,17 +71,23 @@ public class DynamicTimeWarping {
 				costRight = 1e12;
 			}
 			isValidCellChosen = false;
-//			double epsilon = 1e-9, epsilon3x = 3e-9;
-//			costSum = costDiag+costRight+costDown;
-//			probs[0] = (costSum-costRight+epsilon) / (costSum + epsilon3x);
-//			probs[1] = (costSum-costDiag+epsilon) / (costSum + epsilon3x) + probs[0];
-			double alpha = 5;
-			costRight = Math.exp(-alpha * costRight);
-			costDiag = Math.exp(-alpha * costDiag);
-			costDown = Math.exp(-alpha * costDown);
-			costSum = (costRight + costDiag + costDown)/2.0;  
-			probs[0] = costRight/costSum;
-			probs[1] = costDiag/costSum+probs[0];
+			{
+				double epsilon = 1e-9, epsilon3x = 3e-9;
+				costSum = costDiag+costRight+costDown;
+				probs[0] = (costSum-costRight+epsilon) / (costSum + epsilon3x);
+				probs[1] = (costSum-costDiag+epsilon) / (costSum + epsilon3x) + probs[0];
+			}
+			// This is the code segment for testing exponential ranking for the selection.
+			// The results are not favorable. the accuracy drops down instead of getting better
+//			{
+//				double alpha = 5;
+//				costRight = Math.exp(-alpha * costRight);
+//				costDiag = Math.exp(-alpha * costDiag);
+//				costDown = Math.exp(-alpha * costDown);
+//				costSum = (costRight + costDiag + costDown)/2.0;  
+//				probs[0] = costRight/costSum;
+//				probs[1] = costDiag/costSum+probs[0];
+//			}
 			while(!isValidCellChosen) {		// loop used for times when we are at the end of warping path but a valid cell can't be chosen
 				if (distribution == 1) {
 					selProb = rand.nextDouble() * 2.0;	// generate a uniform random number
