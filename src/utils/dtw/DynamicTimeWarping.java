@@ -4,7 +4,13 @@ import java.util.Arrays;
 //import java.util.Locale;
 //import java.text.DecimalFormat;
 //import java.text.DecimalFormatSymbols;
-import java.util.Random;
+//import java.util.Random;
+
+
+
+import org.apache.commons.math3.distribution.*;
+import org.apache.commons.math3.random.RandomGenerator;
+import org.apache.commons.math3.random.Well19937c;
 
 import utils.timeseries.TimeSeries;
 import utils.distance.DistanceFunction;
@@ -12,7 +18,9 @@ import utils.dtw.WarpInfo;
 
 public class DynamicTimeWarping {
 	private double[][] costMatrix;
-	private Random rand;
+//	private Random rand;
+	private RandomGenerator rng;
+	private AbstractRealDistribution rand;
 	
 	public DynamicTimeWarping() {
 		
@@ -20,15 +28,35 @@ public class DynamicTimeWarping {
 	
 	public DynamicTimeWarping(int szI, int szJ) {
 		costMatrix = new double[szI][szJ];
-		rand = new Random();
+//		rand = new Random();
+		rng = new Well19937c();
 	}
 	
-	public WarpInfo getHeuristicDTW(TimeSeries tsI, TimeSeries tsJ, DistanceFunction distFn, int windowPercent, int distribution) {
+	public WarpInfo getHeuristicDTW(TimeSeries tsI, TimeSeries tsJ, DistanceFunction distFn, int windowPercent, String ranking, String distribution) {
 		int maxI = tsI.size();			// Maximum index number for TimeSeries I
 		int maxJ = tsJ.size();			// maximum index number for TimeSeries J
 		int i = 0;						// Current index number for TimeSeries I
 		int j = 0;						// Current index number for TimeSeries J
-		double MEAN = 1.0, STD_DEV = 1.0/3.0;//, VARIANCE = STD_DEV*STD_DEV;
+		
+		double lowerLim = 0,
+			   upperLim = 2;
+		
+		double MEAN = 1.0,
+			   STD_DEV = 1.0/3.0;
+		
+		double epsilon = 1e-9,
+			   epsilon3x = 3e-9;
+		
+		double alpha = 5;
+		
+		switch(distribution) {
+			case "U":
+				rand = new UniformRealDistribution(rng, lowerLim, upperLim);
+				break;
+			case "N":
+				rand = new NormalDistribution(rng, MEAN, STD_DEV);
+				break;
+		}
 
 		WarpInfo info = new WarpInfo();	// Warping Path info (e.g. length and path indices)
 		
@@ -71,44 +99,41 @@ public class DynamicTimeWarping {
 				costRight = 1e12;
 			}
 			isValidCellChosen = false;
-			{
-				double epsilon = 1e-9, epsilon3x = 3e-9;
+			if(ranking.equals("L")) {
 				costSum = costDiag+costRight+costDown;
 				probs[0] = (costSum-costRight+epsilon) / (costSum + epsilon3x);
 				probs[1] = (costSum-costDiag+epsilon) / (costSum + epsilon3x) + probs[0];
+			} else if(ranking.equals("E")) {
+				// The results are not favorable. the accuracy drops down instead of getting better
+				costRight = Math.exp(-alpha * costRight);
+				costDiag = Math.exp(-alpha * costDiag);
+				costDown = Math.exp(-alpha * costDown);
+				costSum = (costRight + costDiag + costDown)/2.0;  
+				probs[0] = costRight/costSum;
+				probs[1] = costDiag/costSum+probs[0];
 			}
-			// This is the code segment for testing exponential ranking for the selection.
-			// The results are not favorable. the accuracy drops down instead of getting better
-//			{
-//				double alpha = 5;
-//				costRight = Math.exp(-alpha * costRight);
-//				costDiag = Math.exp(-alpha * costDiag);
-//				costDown = Math.exp(-alpha * costDown);
-//				costSum = (costRight + costDiag + costDown)/2.0;  
-//				probs[0] = costRight/costSum;
-//				probs[1] = costDiag/costSum+probs[0];
-//			}
 			while(!isValidCellChosen) {		// loop used for times when we are at the end of warping path but a valid cell can't be chosen
-				if (distribution == 1) {
-					selProb = rand.nextDouble() * 2.0;	// generate a uniform random number
-					// the random number is between 0 and 1 so we multiply it with
-					// 2 to get it between 0 and 2 
-				} else {
-					selProb = MEAN + rand.nextGaussian()*STD_DEV;	// generate a normally distributed
-					// random number, it has a mean at 0 and a std of 1, so we add MEAN to it
-					// to shift it's mean to 1 and multiply it with STANDARD DEVIATION to generate random
-					// numbers within required Standard Deviation
-					// Previously we were checking the selProb each time we got a random number and
-					// restricted it between 0 and 2 however it was counterproductive. because we were only
-					// basing our decision on whether the number was < or > a given probability so even if
-					// it turns out to be < 0 or > 2, it still is a good number to base our decision
-				}
+//				if (distribution == 1) {
+//					selProb = rand.nextDouble() * 2.0;	// generate a uniform random number
+//					// the random number is between 0 and 1 so we multiply it with
+//					// 2 to get it between 0 and 2 
+//				} else {
+//					selProb = MEAN + rand.nextGaussian()*STD_DEV;	// generate a normally distributed
+//					// random number, it has a mean at 0 and a std of 1, so we add MEAN to it
+//					// to shift it's mean to 1 and multiply it with STANDARD DEVIATION to generate random
+//					// numbers within required Standard Deviation
+//					// Previously we were checking the selProb each time we got a random number and
+//					// restricted it between 0 and 2 however it was counterproductive. because we were only
+//					// basing our decision on whether the number was < or > a given probability so even if
+//					// it turns out to be < 0 or > 2, it still is a good number to base our decision
+//				}
 				// Previously, we are checking if the selProb was <= probs[0] then we chose to go right.
 				// If selProb was > probs[0] but <= probs[1] we moved to the diagonal.
 				// and if it was > probs[1] as well we moved to the down ward location
 				// however that was inefficient. now we are generating 2 probabilities instead of 3 and
 				// only check for the selProb be to < probs[0] to go right or > probs[1] to go down and
 				// to go diagonally if none of the 2 cases are true
+				selProb = rand.sample();
 				if(selProb < probs[0] && i<maxI && j+1<maxJ && j+1<j+w) {	// j+1<j+w added to restrict going out of window
 					// Moving one cell Right
 					costMatrix[i][j+1] = costMatrix[i][j] + costRight;

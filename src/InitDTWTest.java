@@ -12,54 +12,52 @@ import org.apache.commons.cli.HelpFormatter;
 import utils.dtw.*;
 
 public class InitDTWTest {
+	protected static String fileSwitch = "file";
+	protected static String helpSwitch = "help";
+	protected static String windowSwitch = "window";
+	protected static String twTypeSwitch = "warping";
+	protected static String rngSwitch = "rng";
+	protected static String restartsSwitch = "restarts";
+	protected static String rankingTypeSwitch = "ranking";
+	protected static String segmentSwitch = "segment";
+	
 	public static void main(String[] args) {
 		Options options = constructCLIOptions();
-		String fileName = null,
-			   dtwType = "N",
-			   ranking = "L";
-		int window = 100;
-		
-		
-		if(args.length<1) {
-			System.out.println("-- USAGE --");
-			printHelp(options, false, System.out);
-//			System.err.println("Usage: java InitDTWTest FileName WindowSize_INT DTW_Type Start_Index NumOfInstnsToProcess\n" + 
-//							   "e.g.:  java InitDTWTest Coffee 10 N 0 10\n" + 
-//							   "DTW_Type is either of N (normal), L (lucky), U (uniform) or G (gaussian)" + 
-//							   "FileName of training and testing set should end with _TRAIN and _TEST e.g. Dataset_TRAIN");
-			System.exit(0);
-		} else {
-			try {
-				CommandLineParser gnuCLIParser = new GnuParser();
-				CommandLine commandLine = gnuCLIParser.parse(options, args);
-				
-				if (commandLine.hasOption("h") || commandLine.hasOption("help")) {
-					printHelp(options, true, System.out);
-					System.exit(0);
-				}
-				if (commandLine.hasOption("f") || commandLine.hasOption("file")) {
-					fileName = commandLine.getOptionValue("f");
-				}
-				if (commandLine.hasOption("w") || commandLine.hasOption("window")) {
-					window = Integer.parseInt(commandLine.getOptionValue("w"));
-				}
-				if (commandLine.hasOption("t") || commandLine.hasOption("dtw-type")) {
-					dtwType = commandLine.getOptionValue("t");
-				}
-			} catch (ParseException parseException) // checked exception
-			{
-				System.err.println("Encountered exception while parsing using GnuParser:\n" + parseException.getMessage());
-			}
-		}
-		
-//		String fileName = args[0];
-		
-//		int window = Integer.parseInt(args[1]);
+		String fileName = null, dtwType = null, rng = null, ranking = null, passes = null;
+		int window = 0;
 		int start = 0, inc = 0;
-		if(args.length == 5) {
-			start = Integer.parseInt(args[3]);
-			inc = Integer.parseInt(args[4]);
+		
+		try {
+			CommandLineParser cliParser = new GnuParser();
+			CommandLine cmdLine = cliParser.parse(options, args);
+			
+			if (cmdLine.getOptions().length == 0 || cmdLine.hasOption(helpSwitch)) {
+				printHelp(options, true, System.out);
+				System.exit(0);
+			}
+			
+			fileName = cmdLine.getOptionValue(fileSwitch);
+			window = Integer.parseInt(cmdLine.getOptionValue(windowSwitch, "100"));
+			dtwType = cmdLine.getOptionValue(twTypeSwitch, "N");
+			
+			if (dtwType.equals("H")) {
+				rng = cmdLine.getOptionValue(rngSwitch, "N");
+				ranking = cmdLine.getOptionValue(rankingTypeSwitch, "L");					
+				passes = cmdLine.getOptionValue(restartsSwitch, "5");
+			}
+			
+			if (cmdLine.hasOption(segmentSwitch)) {
+				String[] temp = cmdLine.getOptionValues(segmentSwitch);
+				start = Integer.parseInt(temp[0]);
+				inc = Integer.parseInt(temp[1]);
+			}
+		} catch (ParseException parseException) // checked exception
+		{
+			System.err.println("Encountered exception while parsing input arguments:\n" + parseException.getMessage() + "\n\n");
+			printHelp(options, true, System.out);
+			System.exit(0);
 		}
+		
 		BaseDTW dtw;
 		switch (dtwType) {
 			case "N":
@@ -70,15 +68,22 @@ public class InitDTWTest {
 				dtw = new LuckyDTW(fileName, window, start, inc);
 				dtw.execute();
 				break;
-			case "U":
-				dtw = new HeuristicDTW(fileName, window, 1, start, inc);
+			case "H":
+				dtw = new HeuristicDTW(fileName, window, ranking, passes, rng);
 				dtw.execute();
 				break;
-			case "G":
-				dtw = new HeuristicDTW(fileName, window, 2, start, inc);
-				dtw.execute();
-				break;
+//			case "U":
+//				dtw = new HeuristicDTW(fileName, window, ranking, passes, 1);
+////				dtw = new HeuristicDTW(fileName, window, ranking, passes, 1, start, inc);
+//				dtw.execute();
+//				break;
+//			case "G":
+//				dtw = new HeuristicDTW(fileName, window, ranking, passes, 2);
+////				dtw = new HeuristicDTW(fileName, window, ranking, passes, 2, start, inc);
+//				dtw.execute();
+//				break;
 		}
+		System.out.println("Done");
 	}
     
 	/**
@@ -102,44 +107,45 @@ public class InitDTWTest {
 	}
 	
     private static Options constructCLIOptions() {
-    	Option help = new Option("h", "prints the help for the program");
-    	help.setLongOpt("help");
+    	Option help = new Option(helpSwitch, "prints the help for the program");
     	
-    	Option fileName = new Option("f", "name of the dataset");
-//    	fileName.setRequired(true);
+    	Option fileName = new Option(fileSwitch, "name of the dataset");
+    	fileName.setRequired(true);
     	fileName.setArgs(1);
-    	fileName.setLongOpt("file");
     	fileName.setArgName("dataset");
     	
-    	Option winSz = new Option("w", "DTW window size as a percentage e.g. 1, 5, 10");
+    	Option winSz = new Option(windowSwitch, "DTW window size as a percentage e.g. 1, 5, 10 100 (default)");
+//    	winSz.setRequired(true);
     	winSz.setArgs(1);
-    	winSz.setLongOpt("window");
     	winSz.setArgName("percent");
 //    	winSz.setType(Number.class);
     	
-    	Option type = new Option("t", "defines the DTW type, valid options are N, L, U and G for Normal, Lucky, Uniform and Gaussian");
+    	Option dtwType = new Option(twTypeSwitch, "defines the DTW type, valid options are N (default), L, and H for Normal, Lucky, and Heuristic");
 //    	type.setRequired(true);
-    	type.setArgs(1);
-    	type.setLongOpt("dtw-type");
-    	type.setArgName("type");
+    	dtwType.setArgs(1);
+    	dtwType.setArgName("warpingType");
     	
-    	Option passes = new Option("p", "number of restarts for heuristic DTW calculations");
+    	Option rngType = new Option(rngSwitch, "defines the RNG type, valid options are N (normally distributed random numbers - default), "+
+    								"U (uniformly distributed random numbers)");
+//    	type.setRequired(true);
+    	rngType.setArgs(1);
+    	rngType.setArgName("rngType");
+    	
+    	Option passes = new Option(restartsSwitch, "number of restarts for heuristic DTW calculations 0 (no restarts), " + 
+    							   "I (increasing with number of runs), positive integer (for constant number of restarts)");
     	passes.setArgs(1);
-    	passes.setLongOpt("passes");
     	passes.setArgName("number");
     	
-    	Option ranking = new Option("r", "type of ranking to use e.g. L (linear - default), E (exponential)");
+    	Option ranking = new Option(rankingTypeSwitch, "type of ranking to use e.g. L (linear - default), E (exponential)");
     	ranking.setArgs(1);
-    	ranking.setLongOpt("ranking");
     	ranking.setArgName("method");
     	
-    	Option segment = new Option("s", "calculates the DTW of the instances starting from 'start' and upto 'start+increment' from the test set");
+    	Option segment = new Option(segmentSwitch, "calculates the DTW of the instances starting from 'start' and upto 'start+increment' from the test set");
     	segment.setArgs(2);
-//    	segment.setLongOpt("segmented");
-    	segment.setArgName("start> <increment");   	
+    	segment.setArgName("startPoint> <increment");   	
     	
     	Options opts = new Options();
-    	opts.addOption(help).addOption(fileName).addOption(type).addOption(winSz).addOption(passes).addOption(segment).addOption(ranking);
+    	opts.addOption(help).addOption(fileName).addOption(dtwType).addOption(rngType).addOption(winSz).addOption(passes).addOption(segment).addOption(ranking);
     	return opts;
     }
 }

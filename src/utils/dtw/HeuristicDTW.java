@@ -15,18 +15,23 @@ public class HeuristicDTW extends BaseDTW {
 	
 	protected int startIndex, endIndex;
 	
-	private int hType;
+	protected String rankingMethod;
+	protected String numRestarts;
+	
+	private String hType;
 	private int maxRuns;
 	private double[] runTimes;
 	private FileWriter fwRunTime;
 	private BufferedWriter bwRunTime;
 
-	public HeuristicDTW(String fName, int window, int type) {
+	public HeuristicDTW(String fName, int window, String ranking, String restarts, String type) {
 		super(fName, window);
 		
 		startIndex = 0;
 		endIndex = testSet.size();
 
+		this.rankingMethod = ranking;
+		this.numRestarts = restarts;
 		this.hType = type;
 		this.maxRuns = 10;
 		this.runTimes = new double[this.maxRuns];
@@ -34,29 +39,29 @@ public class HeuristicDTW extends BaseDTW {
 
 		try {
 			this.filePath = this.rsltDir + this.fileName + "_" + this.windowSize;
-			if(this.hType == 1) {
+			if(this.hType.equals("U")) {
 				this.filePath +=  "_Uniform";
-			} else if(this.hType == 2) {
+			} else if(this.hType.equals("N")) {
 				this.filePath += "_Gaussian";
 			}
-			this.fwTimeAndLength = new FileWriter(this.filePath + "_Time_Length.csv", true);
-			this.fwAccuracy = new FileWriter(this.filePath + "_Accuracy.csv", true);
-			this.fwRunTime = new FileWriter(this.filePath + "_RunTime.csv", true);
+			this.fwTimeAndLength = new FileWriter(this.filePath + "_Time_Length.csv");
+			this.fwAccuracy = new FileWriter(this.filePath + "_Accuracy.csv");
+			this.fwRunTime = new FileWriter(this.filePath + "_RunTime.csv");
 			
 			this.bwTimeAndLength = new BufferedWriter(this.fwTimeAndLength);
 			this.bwAccuracy = new BufferedWriter(this.fwAccuracy);
 			this.bwRunTime = new BufferedWriter(this.fwRunTime);
 			
-//			this.bwTimeAndLength.write("Run#,Window,Test#,Train#,CalculationTime (ms),Length\n");
-//			this.bwAccuracy.write("Run#,Window,Test#,Actual_Class,Predicted_Class\n");
-//			this.bwRunTime.write("Run#,Time\n");
+			this.bwTimeAndLength.write("Run#,Window,Test#,Train#,CalculationTime (ms),Length\n");
+			this.bwAccuracy.write("Run#,Window,Test#,Actual_Class,Predicted_Class\n");
+			this.bwRunTime.write("Run#,Time\n");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	public HeuristicDTW(String fName, int window, int type, int startIndx, int numToProcess) {
-		this(fName, window, type);
+	public HeuristicDTW(String fName, int window, String ranking, String restarts, String type, int startIndx, int numToProcess) {
+		this(fName, window, ranking, restarts, type);
 		this.startIndex = startIndx;
 		if(numToProcess != 0) {
 			this.endIndex = Math.min(this.startIndex+numToProcess, testSet.size());
@@ -64,15 +69,26 @@ public class HeuristicDTW extends BaseDTW {
 	}
 	
 	public void execute() {
-		WarpInfo warpInfo = warp.getHeuristicDTW(testSet.get(this.startIndex), trainSet.get(0), distFn, windowSize, hType);
+		WarpInfo warpInfo = warp.getHeuristicDTW(testSet.get(this.startIndex), trainSet.get(0), distFn, windowSize, rankingMethod, hType);
 		
 		long instStartTime, instEndTime, instProcessingTime, runStartTime, runEndTime;
 		TimeSeries test = null, train = null;
 		int classPredicted, bestPathLength;
+		int maxRunsLimit = 0;
 		double bestDist;
 		this.startTime = System.currentTimeMillis();
 		for(int runNum = 1; runNum<=maxRuns; runNum++) {
 			runStartTime = System.currentTimeMillis();
+			switch(numRestarts) {
+				case "I":
+					maxRunsLimit = runNum;
+					break;
+				case "0":
+					maxRunsLimit = 1;
+					break;
+				default:
+					maxRunsLimit = Math.abs(Integer.parseInt(numRestarts));
+			}
 			for(int i=startIndex; i<endIndex; i++) {
 				if(i%100==0) {
 					try {
@@ -91,10 +107,11 @@ public class HeuristicDTW extends BaseDTW {
 				for(int j=0; j<trainSet.size(); j++) {
 					train = trainSet.get(j);
 					instStartTime = System.currentTimeMillis();
-					for(int instRunNum = 0; instRunNum<1; instRunNum++) {		// 0 Restarts
+//					for(int instRunNum = 0; instRunNum<1; instRunNum++) {		// 0 Restarts
 //					for(int instRunNum = 0; instRunNum<maxRuns; instRunNum++) {	// Constant Restarts [equal to runs]
 //					for(int instRunNum = 0; instRunNum<runNum; instRunNum++) {	// Increasing Restarts
-						warpInfo = warp.getHeuristicDTW(test, train, distFn, windowSize, hType);
+					for(int instRunNum = 0; instRunNum<maxRunsLimit; instRunNum++) {		// 0 Restarts
+						warpInfo = warp.getHeuristicDTW(test, train, distFn, windowSize, rankingMethod, hType);
 						if(warpInfo.getWarpDistance()<bestDist) {
 							bestDist = warpInfo.getWarpDistance();
 							classPredicted = train.getTSClass();
