@@ -29,6 +29,8 @@ public class BaseDTW {
 	
 	protected DistanceFunction distFn;			// Distance Function to use
 	
+	protected DynamicTimeWarping warp;
+	
 	protected FileWriter fwTimeAndLength,			// FileWriter for Calculation Time and path Lengths
 						 fwAccuracy,				// FileWriter for Accuracy
 						 fwTotalTime;				// FileWriter for Total Time Taken
@@ -37,10 +39,15 @@ public class BaseDTW {
 							 bwAccuracy,			// BufferedWriter for Accuracy
 							 bwTotalTime;			// BufferedWriter for Total Time Taken
 	
+	protected boolean appendResults;
+	
+	protected int startIndex, endIndex;
+	
 	public BaseDTW(String fName, int window) {
 		this.fileName = fName;
 		this.windowSize = window;
 		this.totalTime = 0;
+		this.appendResults = false;
 		
 		this.homeDir = System.getProperty("user.home");
 		this.dataDir = this.homeDir + "/work/data/ucr_timeseries/";
