@@ -1,6 +1,9 @@
 package utils.dtw;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
@@ -11,11 +14,6 @@ import utils.dtw.WarpInfo;
 public class HeuristicDTW extends BaseDTW {
 	protected long startTime, endTime;
 	
-	protected DynamicTimeWarping warp;
-	
-	protected int startIndex, endIndex;
-	
-	protected String rankingMethod;
 	protected String numRestarts;
 	
 	private String hType;
@@ -24,18 +22,21 @@ public class HeuristicDTW extends BaseDTW {
 	private FileWriter fwRunTime;
 	private BufferedWriter bwRunTime;
 
-	public HeuristicDTW(String fName, int window, String ranking, String restarts, String type) {
+	public HeuristicDTW(String fName, int window, String ranking, String restarts, String type, int startIndx, int numToProcess) {
 		super(fName, window);
 		
-		startIndex = 0;
-		endIndex = testSet.size();
-
-		this.rankingMethod = ranking;
+		this.startIndex = startIndx;
+		if(numToProcess != 0) {
+			this.appendResults = true;
+			this.endIndex = Math.min(this.startIndex+numToProcess, testSet.size());
+		} else {
+			endIndex = testSet.size();
+		}
 		this.numRestarts = restarts;
 		this.hType = type;
 		this.maxRuns = 10;
 		this.runTimes = new double[this.maxRuns];
-		warp = new DynamicTimeWarping(testSet.get(0).size(), trainSet.get(0).size());
+		warp = new DynamicTimeWarping(testSet.get(0).size(), trainSet.get(0).size(), ranking);
 
 		try {
 			this.filePath = this.rsltDir + this.fileName + "_" + this.windowSize;
@@ -52,24 +53,19 @@ public class HeuristicDTW extends BaseDTW {
 			this.bwAccuracy = new BufferedWriter(this.fwAccuracy);
 			this.bwRunTime = new BufferedWriter(this.fwRunTime);
 			
-			this.bwTimeAndLength.write("Run#,Window,Test#,Train#,CalculationTime (ms),Length\n");
-			this.bwAccuracy.write("Run#,Window,Test#,Actual_Class,Predicted_Class\n");
-			this.bwRunTime.write("Run#,Time\n");
+//			if(!this.appendResults) {
+//				this.bwTimeAndLength.write("Run#,Window,Test#,Train#,CalculationTime (ms),Length\n");
+//				this.bwAccuracy.write("Run#,Window,Test#,Actual_Class,Predicted_Class\n");
+//				this.bwRunTime.write("Run#,Time\n");
+//			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	public HeuristicDTW(String fName, int window, String ranking, String restarts, String type, int startIndx, int numToProcess) {
-		this(fName, window, ranking, restarts, type);
-		this.startIndex = startIndx;
-		if(numToProcess != 0) {
-			this.endIndex = Math.min(this.startIndex+numToProcess, testSet.size());
-		}
-	}
-	
 	public void execute() {
-		WarpInfo warpInfo = warp.getHeuristicDTW(testSet.get(this.startIndex), trainSet.get(0), distFn, windowSize, rankingMethod, hType);
+		warp.initRNGDistribution(hType);
+		WarpInfo warpInfo = warp.getHeuristicDTW(testSet.get(this.startIndex), trainSet.get(0), distFn, windowSize);
 		
 		long instStartTime, instEndTime, instProcessingTime, runStartTime, runEndTime;
 		TimeSeries test = null, train = null;
@@ -111,7 +107,7 @@ public class HeuristicDTW extends BaseDTW {
 //					for(int instRunNum = 0; instRunNum<maxRuns; instRunNum++) {	// Constant Restarts [equal to runs]
 //					for(int instRunNum = 0; instRunNum<runNum; instRunNum++) {	// Increasing Restarts
 					for(int instRunNum = 0; instRunNum<maxRunsLimit; instRunNum++) {		// 0 Restarts
-						warpInfo = warp.getHeuristicDTW(test, train, distFn, windowSize, rankingMethod, hType);
+						warpInfo = warp.getHeuristicDTW(test, train, distFn, windowSize);
 						if(warpInfo.getWarpDistance()<bestDist) {
 							bestDist = warpInfo.getWarpDistance();
 							classPredicted = train.getTSClass();
@@ -144,9 +140,24 @@ public class HeuristicDTW extends BaseDTW {
 	        this.bwAccuracy.write(this.accuracy.toString());
 			this.bwAccuracy.close();
 			
+	        double prevTime = 0;
+	        if(this.appendResults && (new File(this.filePath + "_TotalTime.csv").exists())) {
+	        	String temp = null;
+	        	BufferedReader brTotalTime = null;
+	        	try {
+	        		brTotalTime = new BufferedReader(new FileReader(this.filePath + "_TotalTime.csv"));
+	        		while((temp=brTotalTime.readLine())!=null) {
+	        			prevTime=Double.parseDouble(temp);
+	        		}
+	        	} catch(Exception e) {
+	        		e.printStackTrace();
+	        	} finally {
+	        		brTotalTime.close();
+	        	}
+	        }
 			this.fwTotalTime = new FileWriter(this.filePath + "_TotalTime.csv");
 			this.bwTotalTime = new BufferedWriter(fwTotalTime);
-			this.bwTotalTime.write(totalTime/1000.0 + "\n");
+			this.bwTotalTime.write((1000*prevTime + totalTime)/1000.0 + "\n");
 			this.bwTotalTime.close();
 			
 			for(int runNum = 1; runNum<=maxRuns; runNum++) {
