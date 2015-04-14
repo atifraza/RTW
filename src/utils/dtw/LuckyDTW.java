@@ -28,8 +28,8 @@ public class LuckyDTW extends BaseDTW {
 		
 		try {
 			this.filePath = this.rsltDir + this.fileName + "_" + this.windowSize + "_Lucky";
-			this.fwTimeAndLength = new FileWriter(this.filePath + "_Time_Length.csv", true);
-			this.fwAccuracy = new FileWriter(this.filePath + "_Accuracy.csv", true);
+			this.fwTimeAndLength = new FileWriter(this.filePath + "_Time_Length.csv", this.appendResults);
+			this.fwAccuracy = new FileWriter(this.filePath + "_Accuracy.csv", this.appendResults);
 
 			this.bwTimeAndLength = new BufferedWriter(this.fwTimeAndLength);
 			this.bwAccuracy = new BufferedWriter(this.fwAccuracy);
@@ -45,7 +45,7 @@ public class LuckyDTW extends BaseDTW {
 	
 	public void execute() {
 		// warm up call
-		WarpInfo warpInfo = warp.getLuckyDTW(testSet.get(this.startIndex), trainSet.get(0), distFn, windowSize);
+		WarpInfo warpInfo = warp.getLuckyDTW(testSet.get(startIndex), trainSet.get(0), distFn, windowSize);
 		
 		long instStartTime, instEndTime, instProcessingTime;
 		TimeSeries test = null, train = null;
