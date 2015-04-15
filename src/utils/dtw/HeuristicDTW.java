@@ -42,7 +42,7 @@ public class HeuristicDTW extends BaseDTW {
 			this.filePath = this.rsltDir + this.fileName + "_" + this.windowSize;
 			if(this.hType.equals("U")) {
 				this.filePath +=  "_Uniform";
-			} else if(this.hType.equals("N")) {
+			} else if(this.hType.equals("G")) {
 				this.filePath += "_Gaussian";
 			}
 			this.fwTimeAndLength = new FileWriter(this.filePath + "_Time_Length.csv");

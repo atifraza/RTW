@@ -55,7 +55,7 @@ public class InitDTWTest {
 			dtwType = cmdLine.getOptionValue(twTypeSwitch, "N");
 			
 			if (dtwType.equals("H")) {
-				rng = cmdLine.getOptionValue(rngSwitch, "N");
+				rng = cmdLine.getOptionValue(rngSwitch, "G");
 				ranking = cmdLine.getOptionValue(rankingTypeSwitch, "L");					
 				passes = cmdLine.getOptionValue(passesSwitch, "5");
 			}
