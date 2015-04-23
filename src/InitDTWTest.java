@@ -15,6 +15,9 @@ public class InitDTWTest {
 	protected static String fileSwitch = "f",
 							fileSwitchLong = "file";
 	
+	protected static String outDirSwitch = "o",
+							outDirSwitchLong = "out-dir";
+	
 	protected static String helpSwitch = "h",
 							helpSwitchLong = "help";
 	
@@ -37,7 +40,7 @@ public class InitDTWTest {
 	
 	public static void main(String[] args) {
 		Options options = constructCLIOptions();
-		String fileName = null, dtwType = null, rng = null, ranking = null, passes = null;
+		String fileName = null, outDir = null, dtwType = null, rng = null, ranking = null, passes = null;
 		int window = 0;
 		int start = 0, inc = 0;
 		
@@ -51,6 +54,7 @@ public class InitDTWTest {
 			}
 			
 			fileName = cmdLine.getOptionValue(fileSwitch);
+			outDir = cmdLine.getOptionValue(outDirSwitch, "");
 			window = Integer.parseInt(cmdLine.getOptionValue(bandSwitch, "100"));
 			dtwType = cmdLine.getOptionValue(twTypeSwitch, "N");
 			
@@ -75,15 +79,15 @@ public class InitDTWTest {
 		BaseDTW dtw;
 		switch (dtwType) {
 			case "N":
-				dtw = new NormalDTW(fileName, window, start, inc);
+				dtw = new NormalDTW(fileName, outDir, window, start, inc);
 				dtw.execute();
 				break;
 			case "L":
-				dtw = new LuckyDTW(fileName, window, start, inc);
+				dtw = new LuckyDTW(fileName, outDir, window, start, inc);
 				dtw.execute();
 				break;
 			case "H":
-				dtw = new HeuristicDTW(fileName, window, ranking, passes, rng, start, inc);
+				dtw = new HeuristicDTW(fileName, outDir, window, ranking, passes, rng, start, inc);
 				dtw.execute();
 				break;
 		}
@@ -114,11 +118,16 @@ public class InitDTWTest {
     	Option help = new Option(helpSwitch, "prints the help for the program");
     	help.setLongOpt(helpSwitchLong);
     	
-    	Option fileName = new Option(fileSwitch, "name of the dataset");
-    	fileName.setLongOpt(fileSwitchLong);
-    	fileName.setRequired(true);
-    	fileName.setArgs(1);
-    	fileName.setArgName("dataset");
+    	Option datafileName = new Option(fileSwitch, "name of the dataset");
+    	datafileName.setLongOpt(fileSwitchLong);
+    	datafileName.setRequired(true);
+    	datafileName.setArgs(1);
+    	datafileName.setArgName("dataset");
+    	
+    	Option outputDir = new Option(outDirSwitch, "directory to use for saving the results");
+    	outputDir.setLongOpt(outDirSwitchLong);
+    	outputDir.setArgs(1);
+    	outputDir.setArgName("directory");
     	
     	Option winSz = new Option(bandSwitch, "DTW window size as a percentage e.g. 1, 5, 10 100 (default)");
     	winSz.setLongOpt(bandSwitchLong);
@@ -152,7 +161,15 @@ public class InitDTWTest {
     	segment.setArgName("startPoint> <increment");   	
     	
     	Options opts = new Options();
-    	opts.addOption(help).addOption(fileName).addOption(dtwType).addOption(rngType).addOption(winSz).addOption(passes).addOption(segment).addOption(ranking);
+    	opts.addOption(help)
+    		.addOption(datafileName)
+    		.addOption(outputDir)
+    		.addOption(dtwType)
+    		.addOption(rngType)
+    		.addOption(winSz)
+    		.addOption(passes)
+    		.addOption(segment)
+    		.addOption(ranking);
     	return opts;
     }
 }
