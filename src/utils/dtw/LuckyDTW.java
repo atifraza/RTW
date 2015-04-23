@@ -14,8 +14,8 @@ import utils.dtw.WarpInfo;
 public class LuckyDTW extends BaseDTW {
 	protected long startTime, endTime;
 	
-	public LuckyDTW(String fName, int window, int startIndx, int numToProcess) {
-		super(fName, window);
+	public LuckyDTW(String fName, String outDir, int window, int startIndx, int numToProcess) {
+		super(fName, outDir, window);
 		
 		this.startIndex = startIndx;
 		if(numToProcess != 0) {
@@ -24,7 +24,7 @@ public class LuckyDTW extends BaseDTW {
 		} else {
 			endIndex = testSet.size();
 		}
-		warp = new DynamicTimeWarping(testSet.get(0).size(), trainSet.get(0).size());
+		warp = new DynamicTimeWarping(testSet.get(0).size(), trainSet.get(0).size(), this.windowSize);
 		
 		try {
 			this.filePath = this.rsltDir + this.fileName + "_" + this.windowSize + "_Lucky";
@@ -45,7 +45,7 @@ public class LuckyDTW extends BaseDTW {
 	
 	public void execute() {
 		// warm up call
-		WarpInfo warpInfo = warp.getLuckyDTW(testSet.get(startIndex), trainSet.get(0), distFn, windowSize);
+		WarpInfo warpInfo = warp.getLuckyDTW(testSet.get(startIndex), trainSet.get(0), distFn);
 		
 		long instStartTime, instEndTime, instProcessingTime;
 		TimeSeries test = null, train = null;
@@ -69,7 +69,7 @@ public class LuckyDTW extends BaseDTW {
 			for(int j=0; j<trainSet.size(); j++) {
 				train = trainSet.get(j);
 				instStartTime = System.currentTimeMillis();
-				warpInfo = warp.getLuckyDTW(test, train, distFn, windowSize);
+				warpInfo = warp.getLuckyDTW(test, train, distFn);
 				if(warpInfo.getWarpDistance()<bestDist) {
 					bestDist = warpInfo.getWarpDistance();
 					classPredicted = train.getTSClass();
