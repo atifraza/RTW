@@ -43,7 +43,7 @@ public class BaseDTW {
 	
 	protected int startIndex, endIndex;
 	
-	public BaseDTW(String fName, int window) {
+	public BaseDTW(String fName, String outDir, int window) {
 		this.fileName = fName;
 		this.windowSize = window;
 		this.totalTime = 0;
@@ -52,6 +52,9 @@ public class BaseDTW {
 		this.homeDir = System.getProperty("user.home");
 		this.dataDir = this.homeDir + "/work/data/ucr_timeseries/";
 		this.rsltDir = this.homeDir + "/work/results/ucr_timeseries/";
+		if(!outDir.equals("")) {
+			this.rsltDir += outDir + "/";
+		}
 		this.testSet = readData(this.dataDir + this.fileName + "_TEST");
 		this.trainSet = readData(this.dataDir + this.fileName + "_TRAIN");
 		
