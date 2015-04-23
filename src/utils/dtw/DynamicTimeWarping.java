@@ -1,43 +1,51 @@
 package utils.dtw;
 
 import java.util.Arrays;
+
+
+
 //import java.util.Locale;
 //import java.text.DecimalFormat;
 //import java.text.DecimalFormatSymbols;
 //import java.util.Random;
-
-
-
 import org.apache.commons.math3.distribution.*;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.apache.commons.math3.random.Well19937c;
+import org.apache.commons.math3.util.FastMath;
 
+import utils.distribution.SkewedNormalDistribution;
 import utils.timeseries.TimeSeries;
 import utils.distance.DistanceFunction;
 import utils.dtw.WarpInfo;
 
 public class DynamicTimeWarping {
 	private double[][] costMatrix;
-	private int rankingMethod = 1;		// 1: Linear Ranking (default), 2: Exponential Ranking
+	private int windowLen;
+	private int rankingMethod = 1;		// 1: Linear Ranking (default), 2: Exponential Ranking, 3: SkewedNormal
 	private RandomGenerator rng;
 	private AbstractRealDistribution rand;
+	private int distributionType;
 	private double lowerLim = 0,
 				   upperLim = 2;
 	private double MEAN = 1.0,
 				   STD_DEV = 1.0/3.0;
+	private double SKEW = 0;
+	private double ALPHA = 2.0,
+				   BETA = 2.0;
 	
 	public DynamicTimeWarping() {
 		
 	}
 	
-	public DynamicTimeWarping(int szI, int szJ) {
+	public DynamicTimeWarping(int szI, int szJ, int windowPercent) {
 		costMatrix = new double[szI][szJ];
-		rng = new Well19937c();
+		setWindowSize(szI, szJ, windowPercent);
+		rng = null;
 	}
 	
-	public DynamicTimeWarping(int szI, int szJ, String methodName) {
-		this(szI, szJ);
-		
+	public DynamicTimeWarping(int szI, int szJ, int windowPercent, String methodName) {
+		this(szI, szJ, windowPercent);
+		rng = new Well19937c();
 		if(methodName.equals("L")) {
 			this.rankingMethod = 1;
 		} else if(methodName.equals("E")) {
@@ -45,14 +53,46 @@ public class DynamicTimeWarping {
 		}
 	}
 	
+	public void setWindowSize(int tsILen, int tsJLen, int windowPercent) {
+		// window size for calculation of cost matrix entries if windowSize is zero we got to a 1 length window equal to euclidean dist
+		if (windowPercent == 0) {
+			windowLen = 1;
+		} else {
+			windowLen = Math.max( (int) Math.ceil( windowPercent*tsILen/100.0 ), Math.abs(tsILen-tsJLen));
+		}
+	}
+	
 	public void initRNGDistribution(String distribution) {
 		switch(distribution) {
 			case "U":
 				rand = new UniformRealDistribution(rng, lowerLim, upperLim);
+				distributionType = 1;
 				break;
-			case "N":
+			case "G":
 				rand = new NormalDistribution(rng, MEAN, STD_DEV);
+				distributionType = 2;
 				break;
+			case "S":
+				rand = new SkewedNormalDistribution(rng, MEAN, STD_DEV, SKEW);
+				distributionType = 3;
+				break;
+			case "B":
+				rand = new BetaDistribution(ALPHA, BETA);
+				distributionType = 4;
+				break;
+		}
+	}
+	
+	private void updateProbDist(int i, int j, int tsLen) {
+		if(this.distributionType == 3) {
+			this.SKEW = 10.0*FastMath.pow((i-j), 2)/tsLen;	// Aggressive skewness
+			//(double)(i-j)/tsLen;
+			rand = new SkewedNormalDistribution(rng, MEAN, STD_DEV, SKEW);
+		} else if(this.distributionType == 4) {
+			double theta = (double)(i-j)/tsLen;
+			ALPHA -= theta;
+			BETA += theta;
+			rand = new BetaDistribution(ALPHA, BETA);
 		}
 	}
 	
@@ -77,7 +117,7 @@ public class DynamicTimeWarping {
 		return probs;
 	}
 	
-	public WarpInfo getHeuristicDTW(TimeSeries tsI, TimeSeries tsJ, DistanceFunction distFn, int windowPercent) {
+	public WarpInfo getHeuristicDTW(TimeSeries tsI, TimeSeries tsJ, DistanceFunction distFn) {
 		int maxI = tsI.size();			// Maximum index number for TimeSeries I
 		int maxJ = tsJ.size();			// maximum index number for TimeSeries J
 		int i = 0;						// Current index number for TimeSeries I
@@ -91,12 +131,12 @@ public class DynamicTimeWarping {
 		double selProb;							// Selection probability
 		boolean isValidCellChosen;
 
-		int w;	// window size for calculation of cost matrix entries if windowSize is zero we got to a 1 length window equal to euclidean dist
-		if (windowPercent == 0) {
-			w = 1;
-		} else {
-			w = Math.max( (int) Math.ceil( windowPercent*maxI/100.0 ), Math.abs(maxI-maxJ));
-		}
+//		int w;	// window size for calculation of cost matrix entries if windowSize is zero we got to a 1 length window equal to euclidean dist
+//		if (windowPercent == 0) {
+//			w = 1;
+//		} else {
+//			w = Math.max( (int) Math.ceil( windowPercent*maxI/100.0 ), Math.abs(maxI-maxJ));
+//		}
 		
 		for(double[] current : costMatrix) {	// Assign positive infinity to entire matrix
 			Arrays.fill(current, Double.POSITIVE_INFINITY);
@@ -113,14 +153,14 @@ public class DynamicTimeWarping {
 			} else {
 				costDiag = 1e12;
 			}
-			//if(i+1<maxI && Math.abs(i+1-j)<w) { // OLD Conditional, following is better to understand
-			if(i+1<Math.min(w+j, maxI)) {	// Check if moving downwards is valid
+			//if(i+1<maxI && Math.abs(i+1-j)<windowLen) { // OLD Conditional, following is better to understand
+			if(i+1<Math.min(windowLen+j, maxI)) {	// Check if moving downwards is valid
 				costDown = distFn.calcDistance(tsI.get(i+1), tsJ.get(j));
 			} else {
 				costDown = 1e12;
 			}
 			//if(j+1<maxJ && Math.abs(j+1-i)<maxI) { // OLD Conditional, following is better to understand
-			if(j+1<Math.min(w+i, maxJ)) {	// Check if moving right is valid
+			if(j+1<Math.min(windowLen+i, maxJ)) {	// Check if moving right is valid
 				costRight = distFn.calcDistance(tsI.get(i), tsJ.get(j+1));
 			} else {
 				costRight = 1e12;
@@ -151,12 +191,12 @@ public class DynamicTimeWarping {
 				// only check for the selProb be to < probs[0] to go right or > probs[1] to go down and
 				// to go diagonally if none of the 2 cases are true
 				selProb = rand.sample();
-				if(selProb < probs[0] && i<maxI && j+1<maxJ && j+1<j+w) {	// j+1<j+w added to restrict going out of window
+				if(selProb < probs[0] && i<maxI && j+1<maxJ && j+1<j+windowLen) {	// j+1<j+windowLen added to restrict going out of window
 					// Moving one cell Right
 					costMatrix[i][j+1] = costMatrix[i][j] + costRight;
 					j++;
 					isValidCellChosen = true;
-				} else if(selProb > probs[1] && i+1<maxI && j<maxJ && i+1<i+w) {	// i+1<i+w added to restrict going out of window
+				} else if(selProb > probs[1] && i+1<maxI && j<maxJ && i+1<i+windowLen) {	// i+1<i+windowLen added to restrict going out of window
 					// Moving one cell Down
 					costMatrix[i+1][j] = costMatrix[i][j] + costDown;
 					i++;
@@ -172,6 +212,9 @@ public class DynamicTimeWarping {
 //					The following code statement is adding the entries to the warping path.
 //					info.addLast(i, j);
 					Arrays.fill(probs, 0);				// reinitialize the probs array to all zeros
+					if(this.distributionType == 3) {
+						updateProbDist(i, j, maxI);
+					}
 					break;
 				}
 			}
@@ -183,7 +226,7 @@ public class DynamicTimeWarping {
 		return info;
 	}
 	
-	public WarpInfo getLuckyDTW(TimeSeries tsI, TimeSeries tsJ, DistanceFunction distFn, int windowPercent) {
+	public WarpInfo getLuckyDTW(TimeSeries tsI, TimeSeries tsJ, DistanceFunction distFn) {
 		int maxI = tsI.size();			// Maximum index number for TimeSeries I
 		int maxJ = tsJ.size();			// maximum index number for TimeSeries J
 		int i = 0;						// Current index number for TimeSeries I
@@ -192,12 +235,12 @@ public class DynamicTimeWarping {
 		
 		double costDiag, costRight, costDown;	// cost variables for prospective successive directions 
 		
-		int w;	// window size for calculation of cost matrix entries if windowSize is zero we got to a 1 length window equal to euclidean dist
-		if (windowPercent == 0) {
-			w = 1;
-		} else {
-			w = Math.max( (int) Math.ceil( windowPercent*maxI/100.0 ), Math.abs(maxI-maxJ));
-		}
+//		int w;	// window size for calculation of cost matrix entries if windowSize is zero we got to a 1 length window equal to euclidean dist
+//		if (windowPercent == 0) {
+//			w = 1;
+//		} else {
+//			w = Math.max( (int) Math.ceil( windowPercent*maxI/100.0 ), Math.abs(maxI-maxJ));
+//		}
 		
 		for(double[] current : costMatrix) {	// Assign positive infinity to entire matrix
 			Arrays.fill(current, Double.POSITIVE_INFINITY);
@@ -215,14 +258,14 @@ public class DynamicTimeWarping {
 			} else {
 				costDiag = 1e12;
 			}
-			//if(i+1<maxI && Math.abs(i+1-j)<w) { // OLD Conditional, following is better to understand
-			if(i+1<Math.min(w+j, maxI)) {
+			//if(i+1<maxI && Math.abs(i+1-j)<windowLen) { // OLD Conditional, following is better to understand
+			if(i+1<Math.min(windowLen+j, maxI)) {
 				costDown = distFn.calcDistance(tsI.get(i+1), tsJ.get(j));
 			} else {
 				costDown = 1e12;
 			}
 			//if(j+1<maxJ && Math.abs(j+1-i)<maxI) { // OLD Conditional, following is better to understand
-			if(j+1<Math.min(w+i, maxJ)) {
+			if(j+1<Math.min(windowLen+i, maxJ)) {
 				costRight = distFn.calcDistance(tsI.get(i), tsJ.get(j+1));
 			} else {
 				costRight = 1e12;
@@ -257,40 +300,40 @@ public class DynamicTimeWarping {
 		return info;
 	}
 	
-	public WarpInfo getNormalDTW(TimeSeries tsI, TimeSeries tsJ, DistanceFunction distFn, int windowPercent) {
+	public WarpInfo getNormalDTW(TimeSeries tsI, TimeSeries tsJ, DistanceFunction distFn) {
 		int maxI = tsI.size();
 		int maxJ = tsJ.size();
 		for(double[] current : costMatrix) {
 			Arrays.fill(current, Double.POSITIVE_INFINITY);
 		}
-		if(windowPercent<100) {
-			int w;	// window size for calculation of cost matrix entries if windowSize is zero we got to a 1 length window equal to euclidean dist
-			if (windowPercent == 0) {
-				w = 1;
-			} else {
-				w = Math.max( (int) Math.ceil( windowPercent*maxI/100.0 ), Math.abs(maxI-maxJ));
-			}
+		if(windowLen<maxI) {
+//			int w;	// window size for calculation of cost matrix entries if windowSize is zero we got to a 1 length window equal to euclidean dist
+//			if (windowPercent == 0) {
+//				w = 1;
+//			} else {
+//				w = Math.max( (int) Math.ceil( windowPercent*maxI/100.0 ), Math.abs(maxI-maxJ));
+//			}
 
 			costMatrix[0][0] = distFn.calcDistance(tsI.get(0), tsJ.get(0));
-			for(int j=1; j<w; j++) {
+			for(int j=1; j<windowLen; j++) {
 				costMatrix[0][j] = costMatrix[0][j-1] + distFn.calcDistance(tsI.get(0), tsJ.get(j));
 			}
 			// First loop set
-			for(int i=1; i<w; i++) {
+			for(int i=1; i<windowLen; i++) {
 				costMatrix[i][0] = costMatrix[i - 1][0] + distFn.calcDistance(tsI.get(i), tsJ.get(0));
-				for(int j=1; j<i+w; j++) {
+				for(int j=1; j<i+windowLen; j++) {
 					costMatrix[i][j] = calcCost(tsI, tsJ, distFn, costMatrix, i, j);
 				}
 			}
 			// Second loop set
 			int k=1;
-			for(int i=w; i<maxI-w; i++, k++) {
-				for(int j=k; j<i+w; j++) {
+			for(int i=windowLen; i<maxI-windowLen; i++, k++) {
+				for(int j=k; j<i+windowLen; j++) {
 					costMatrix[i][j] = calcCost(tsI, tsJ, distFn, costMatrix, i, j);
 				}
 			}
 			// Third loop set
-			for(int i=maxI-w; i<maxI; i++, k++) {
+			for(int i=maxI-windowLen; i<maxI; i++, k++) {
 				for(int j=k; j<maxJ; j++) {
 					costMatrix[i][j] = calcCost(tsI, tsJ, distFn, costMatrix, i, j);
 				}
