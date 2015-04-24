@@ -23,23 +23,22 @@ public class SkewedNormalDistribution extends AbstractRealDistribution {
 	 * 
 	 */
     private static final long serialVersionUID = -6652210374979944218L;
-	/**
-     * Default inverse cumulative probability accuracy.
-     * @since 2.1
-     */
-    public static final double DEFAULT_INVERSE_ABSOLUTE_ACCURACY = 1e-9;
     /** Mean of this distribution. */
-    private final double mean;
+    private double mean;
     /** Standard deviation of this distribution. */
-    private final double standardDeviation;
+    private double standardDeviation;
     /** Skew of this distribution. */
-    private final double skew;
+    private double skew;
     /** Location of this distribution. */
-    private final double location;
+    private double location;
     /** Scale of this distribution. */
-    private final double scale;
+    private double scale;
     /** Shape of this distribution. */
-    private final double shape;
+    private double shape;
+    /** The value of BETA and other variables used again and again are made static and final for better performance */
+    private static final double BETA = 2.0 - FastMath.PI/2.0;
+    private static final double BETA_Squared_CubeRooted = FastMath.pow(BETA*BETA, 1.0/3.0);
+    private static final double PI_by_2_Squared = FastMath.sqrt(FastMath.PI/2.0);
 //    /** The value of {@code log(sd) + 0.5*log(2*pi)} stored for faster computation. */
 //    private final double logStandardDeviationPlusHalfLog2Pi;
 //    /** Inverse cumulative probability accuracy. */
@@ -111,14 +110,16 @@ public class SkewedNormalDistribution extends AbstractRealDistribution {
 //        	throw new NumberIsTooLargeException(LocalizedFormats.ARGUMENT_OUTSIDE_DOMAIN, sk, FastMath.copySign(MAX_SKEW, sk), false);
 //        }
 //        
-        double beta = 2.0 - FastMath.PI/2.0;
-        double skew_23 = FastMath.pow(sk*sk, 1.0/3.0);
-        double beta_23 = FastMath.pow(beta*beta, 1.0/3.0);
-        double eps2 = skew_23/(skew_23+beta_23);
-        double eps = FastMath.copySign(FastMath.sqrt(eps2), sk);
-        double delta = eps * FastMath.sqrt(FastMath.PI/2.0);
+        this.updateParams(mean, sd, sk);
+    }
+    
+    public void updateParams(double mn, double sd, double sk) {
+        double skew_Squared_CubeRooted = FastMath.pow(sk*sk, 1.0/3.0);        
+        double eps_Squared = skew_Squared_CubeRooted/(skew_Squared_CubeRooted+BETA_Squared_CubeRooted);
+        double eps = FastMath.copySign(FastMath.sqrt(eps_Squared), sk);
+        double delta = eps * PI_by_2_Squared;
         
-        this.mean = mean;
+        this.mean = mn;
         this.standardDeviation = sd;
         this.skew = sk;
         
@@ -132,9 +133,8 @@ public class SkewedNormalDistribution extends AbstractRealDistribution {
 //     *
 //     */
 //    private double maxSkew() {
-//    	double beta = 2.0 - FastMath.PI/2.0;
 //    	double eps = FastMath.sqrt(2.0/FastMath.PI);
-//    	return beta * FastMath.pow(eps, 3.0) / FastMath.pow(1-eps*eps, 3.0/2.0) - 1e-16;
+//    	return BETA * FastMath.pow(eps, 3.0) / FastMath.pow(1-eps*eps, 3.0/2.0) - 1e-16;
 //    }
 
     /**

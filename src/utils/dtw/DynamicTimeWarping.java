@@ -30,8 +30,8 @@ public class DynamicTimeWarping {
 	private double MEAN = 1.0,
 				   STD_DEV = 1.0/3.0;
 	private double SKEW = 0;
-	private double ALPHA = 2.0,
-				   BETA = 2.0;
+//	private double ALPHA = 2.0,
+//				   BETA = 2.0;
 	
 	public DynamicTimeWarping() {
 		
@@ -76,10 +76,10 @@ public class DynamicTimeWarping {
 				rand = new SkewedNormalDistribution(rng, MEAN, STD_DEV, SKEW);
 				distributionType = 3;
 				break;
-			case "B":
-				rand = new BetaDistribution(ALPHA, BETA);
-				distributionType = 4;
-				break;
+//			case "B":
+//				rand = new BetaDistribution(ALPHA, BETA);
+//				distributionType = 4;
+//				break;
 		}
 	}
 	
@@ -87,13 +87,14 @@ public class DynamicTimeWarping {
 		if(this.distributionType == 3) {
 			this.SKEW = 10.0*FastMath.pow((i-j), 2)/tsLen;	// Aggressive skewness
 			//(double)(i-j)/tsLen;
-			rand = new SkewedNormalDistribution(rng, MEAN, STD_DEV, SKEW);
-		} else if(this.distributionType == 4) {
-			double theta = (double)(i-j)/tsLen;
-			ALPHA -= theta;
-			BETA += theta;
-			rand = new BetaDistribution(ALPHA, BETA);
-		}
+			((SkewedNormalDistribution) rand).updateParams(MEAN, STD_DEV, SKEW);
+		} 
+//		else if(this.distributionType == 4) {
+//			double theta = (double)(i-j)/tsLen;
+//			ALPHA -= theta;
+//			BETA += theta;
+//			rand = new BetaDistribution(ALPHA, BETA);
+//		}
 	}
 	
  	private double[] rankCandidates(double cRight, double cDiag, double cDown) {
