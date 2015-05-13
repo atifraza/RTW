@@ -100,7 +100,7 @@ public class DynamicTimeWarping {
  	private double[] rankCandidates(double cRight, double cDiag, double cDown) {
 		double[] probs = new double[2];
 		double epsilon = 1e-9, epsilon3x = 3e-9;
-		double alpha = 5;
+		double alpha = 2;
 		double costSum;
 		if(this.rankingMethod==1) {
 			costSum = cDiag+cRight+cDown;
@@ -322,7 +322,7 @@ public class DynamicTimeWarping {
 			// First loop set
 			for(int i=1; i<windowLen; i++) {
 				costMatrix[i][0] = costMatrix[i - 1][0] + distFn.calcDistance(tsI.get(i), tsJ.get(0));
-				for(int j=1; j<i+windowLen; j++) {
+				for(int j=1; j<Math.min(i+windowLen, maxJ); j++) {
 					costMatrix[i][j] = calcCost(tsI, tsJ, distFn, costMatrix, i, j);
 				}
 			}
@@ -393,6 +393,18 @@ public class DynamicTimeWarping {
 //			}
 //			info.addFirst(i, j);
 //		}
+		return info;
+	}
+
+	public WarpInfo getEuclideanDist(TimeSeries tsI, TimeSeries tsJ) {
+		int maxLen = tsI.size();
+		double dist = 0.0;
+		for(int i=0; i<maxLen; i++) {
+			dist += Math.pow(tsI.get(i)-tsJ.get(i), 2);
+		}
+		dist = Math.sqrt(dist);
+		WarpInfo info = new WarpInfo();
+		info.setWarpDistance(dist);
 		return info;
 	}
 

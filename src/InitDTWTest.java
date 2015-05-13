@@ -78,6 +78,10 @@ public class InitDTWTest {
 		
 		BaseDTW dtw;
 		switch (dtwType) {
+			case "E":
+				dtw = new EuclideanDistance(fileName, outDir, start, inc);
+				dtw.execute();
+				break;
 			case "N":
 				dtw = new NormalDTW(fileName, outDir, window, start, inc);
 				dtw.execute();
