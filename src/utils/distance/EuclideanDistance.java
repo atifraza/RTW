@@ -15,7 +15,7 @@ public class EuclideanDistance implements DistanceFunction {
 //			sqSum += Math.pow(vector1[x] - vector2[x], 2.0);
 		sqSum = Math.pow(vector1-vector2, 2);
 
-		return Math.sqrt(sqSum);
+		return sqSum;
 	} // end class euclideanDist(..)
 
 }
