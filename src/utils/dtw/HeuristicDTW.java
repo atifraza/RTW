@@ -76,6 +76,7 @@ public class HeuristicDTW extends BaseDTW {
 		double bestDist;
 		this.startTime = System.currentTimeMillis();
 		for(int runNum = 1; runNum<=maxRuns; runNum++) {
+		    System.out.println("\nRun Num: " + runNum);
 			runStartTime = System.currentTimeMillis();
 			switch(numRestarts) {
 				case "I":
@@ -90,6 +91,7 @@ public class HeuristicDTW extends BaseDTW {
 			for(int i=startIndex; i<endIndex; i++) {
 				if(i%100==0) {
 					try {
+					    System.out.print(i + " ");
 		                this.bwTimeAndLength.write(calcTimeAndPathLen.toString());
 		                this.bwAccuracy.write(accuracy.toString());
 		                this.calcTimeAndPathLen.delete(0, calcTimeAndPathLen.length());

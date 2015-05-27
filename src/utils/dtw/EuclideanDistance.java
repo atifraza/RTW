@@ -53,6 +53,7 @@ public class EuclideanDistance extends BaseDTW {
 		for(int i=startIndex; i<endIndex; i++) {
 			if(i%100==0) {
 				try {
+				    System.out.print(i + " ");
 	                this.bwTimeAndLength.write(calcTimeAndPathLen.toString());
 	                this.bwAccuracy.write(accuracy.toString());
 	                this.calcTimeAndPathLen.delete(0, calcTimeAndPathLen.length());
