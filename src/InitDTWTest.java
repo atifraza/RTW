@@ -77,6 +77,16 @@ public class InitDTWTest {
 		}
 		
 		BaseDTW dtw;
+        System.out.println("Dataset:\t" + fileName);
+        System.out.println("Type:\t\t" + dtwType);
+        System.out.println("Start:\t\t" + start);
+        System.out.println("End:\t\t" + inc);
+        System.out.println("Window:\t\t" + window);
+        if(dtwType.equals("H")) {
+            System.out.println("Ranking:\t" + dtwType);
+            System.out.println("Passes:\t\t" + passes);
+            System.out.println("RNG:\t\t" + rng);
+        }
 		switch (dtwType) {
 			case "E":
 				dtw = new EuclideanDistance(fileName, outDir, start, inc);
@@ -95,7 +105,7 @@ public class InitDTWTest {
 				dtw.execute();
 				break;
 		}
-		System.out.println("Done");
+		System.out.println("\nDone");
 	}
     
 	/**
