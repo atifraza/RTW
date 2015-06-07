@@ -1,6 +1,9 @@
 /bin
 /data
+/results
+/plots
 *.class
+*.csv
 .classpath
 .project
 .settings

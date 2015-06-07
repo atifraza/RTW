@@ -28,24 +28,23 @@ public class LuckyDTW extends BaseDTW {
 		
 		try {
 			this.filePath = this.rsltDir + this.fileName + "_" + this.windowSize + "_Lucky";
-			this.fwTimeAndLength = new FileWriter(this.filePath + "_Time_Length.csv", this.appendResults);
+			//this.fwTimeAndLength = new FileWriter(this.filePath + "_Time_Length.csv", this.appendResults);
 			this.fwAccuracy = new FileWriter(this.filePath + "_Accuracy.csv", this.appendResults);
 
-			this.bwTimeAndLength = new BufferedWriter(this.fwTimeAndLength);
+			//this.bwTimeAndLength = new BufferedWriter(this.fwTimeAndLength);
 			this.bwAccuracy = new BufferedWriter(this.fwAccuracy);
 			
-//			if(!this.appendResults) {
-//				this.bwTimeAndLength.write("Window,Test#,Train#,CalculationTime (ms),Length\n");
-//				this.bwAccuracy.write("Window,Test#,Actual_Class,Predicted_Class\n");
-//			}
+			if(!this.appendResults) {
+				//this.bwTimeAndLength.write("Window,Test#,Train#,CalculationTime (ms),Length\n");
+				this.bwAccuracy.write("Window,Test#,Actual_Class,Predicted_Class\n");
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 	
 	public void execute() {
-		// warm up call
-		WarpInfo warpInfo = warp.getLuckyDTW(testSet.get(startIndex), trainSet.get(0), distFn);
+		WarpInfo warpInfo = new WarpInfo();
 		
 		long instStartTime, instEndTime, instProcessingTime;
 		TimeSeries test = null, train = null;
@@ -56,7 +55,7 @@ public class LuckyDTW extends BaseDTW {
 			if(i%100==0) {
 				try {
 				    System.out.print(i + " ");
-	                this.bwTimeAndLength.write(calcTimeAndPathLen.toString());
+	                //this.bwTimeAndLength.write(calcTimeAndPathLen.toString());
 	                this.bwAccuracy.write(accuracy.toString());
 	                this.calcTimeAndPathLen.delete(0, calcTimeAndPathLen.length());
 	                this.accuracy.delete(0, accuracy.length());
@@ -84,8 +83,8 @@ public class LuckyDTW extends BaseDTW {
 		this.endTime = System.currentTimeMillis();
 		totalTime += this.endTime - this.startTime;
 		try {
-			this.bwTimeAndLength.write(calcTimeAndPathLen.toString());
-	        this.bwTimeAndLength.close();
+			//this.bwTimeAndLength.write(calcTimeAndPathLen.toString());
+	        //this.bwTimeAndLength.close();
 	        this.bwAccuracy.write(accuracy.toString());
 	        this.bwAccuracy.close();
 	        double prevTime = 0;

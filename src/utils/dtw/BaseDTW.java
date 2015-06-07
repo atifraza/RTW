@@ -2,6 +2,7 @@ package utils.dtw;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
@@ -31,11 +32,11 @@ public class BaseDTW {
 	
 	protected DynamicTimeWarping warp;
 	
-	protected FileWriter fwTimeAndLength,			// FileWriter for Calculation Time and path Lengths
+	protected FileWriter //fwTimeAndLength,			// FileWriter for Calculation Time and path Lengths
 						 fwAccuracy,				// FileWriter for Accuracy
 						 fwTotalTime;				// FileWriter for Total Time Taken
 	
-	protected BufferedWriter bwTimeAndLength,		// BufferedWriter for Calculation Time and Path Lengths
+	protected BufferedWriter //bwTimeAndLength,		// BufferedWriter for Calculation Time and Path Lengths
 							 bwAccuracy,			// BufferedWriter for Accuracy
 							 bwTotalTime;			// BufferedWriter for Total Time Taken
 	
@@ -49,12 +50,14 @@ public class BaseDTW {
 		this.totalTime = 0;
 		this.appendResults = false;
 		
-		this.homeDir = System.getProperty("user.home");
-		this.dataDir = this.homeDir + "/work/data/ucr_timeseries/";
-		this.rsltDir = this.homeDir + "/work/results/ucr_timeseries/";
+		this.homeDir = System.getProperty("user.dir");
+		this.dataDir = this.homeDir + "/data/";
+		this.rsltDir = this.homeDir + "/results/";
 		if(!outDir.equals("")) {
 			this.rsltDir += outDir + "/";
 		}
+		File createDir = new File(this.rsltDir);
+		createDir.mkdirs();
 		this.testSet = readData(this.dataDir + this.fileName + "_TEST");
 		this.trainSet = readData(this.dataDir + this.fileName + "_TRAIN");
 		

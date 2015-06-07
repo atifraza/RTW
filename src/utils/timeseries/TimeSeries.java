@@ -4,9 +4,6 @@ import java.util.ArrayList;
 import java.util.StringTokenizer;
 
 public class TimeSeries {
-	// private static final char DEFAULT_DELIMITER = ',';
-	// private static final boolean DEFAULT_IS_LABELED = false;
-
 	private int tsClass;
 	private ArrayList<Double> ts;
 

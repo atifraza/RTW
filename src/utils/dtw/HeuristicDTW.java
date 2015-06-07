@@ -47,19 +47,19 @@ public class HeuristicDTW extends BaseDTW {
 			} else if(this.hType.equals("S")) {
 				this.filePath += "_SkewedNormal";
 			}
-			this.fwTimeAndLength = new FileWriter(this.filePath + "_Time_Length.csv");
+			//this.fwTimeAndLength = new FileWriter(this.filePath + "_Time_Length.csv");
 			this.fwAccuracy = new FileWriter(this.filePath + "_Accuracy.csv");
 			this.fwRunTime = new FileWriter(this.filePath + "_RunTime.csv");
 			
-			this.bwTimeAndLength = new BufferedWriter(this.fwTimeAndLength);
+			//this.bwTimeAndLength = new BufferedWriter(this.fwTimeAndLength);
 			this.bwAccuracy = new BufferedWriter(this.fwAccuracy);
 			this.bwRunTime = new BufferedWriter(this.fwRunTime);
 			
-//			if(!this.appendResults) {
-//				this.bwTimeAndLength.write("Run#,Window,Test#,Train#,CalculationTime (ms),Length\n");
-//				this.bwAccuracy.write("Run#,Window,Test#,Actual_Class,Predicted_Class\n");
-//				this.bwRunTime.write("Run#,Time\n");
-//			}
+			if(!this.appendResults) {
+				//this.bwTimeAndLength.write("Run#,Window,Test#,Train#,CalculationTime (ms),Length\n");
+				this.bwAccuracy.write("Run#,Window,Test#,Actual_Class,Predicted_Class\n");
+				this.bwRunTime.write("Run#,Time\n");
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -67,7 +67,7 @@ public class HeuristicDTW extends BaseDTW {
 
 	public void execute() {
 		warp.initRNGDistribution(hType);
-		WarpInfo warpInfo = warp.getHeuristicDTW(testSet.get(this.startIndex), trainSet.get(0), distFn);
+		WarpInfo warpInfo = new WarpInfo();
 		
 		long instStartTime, instEndTime, instProcessingTime, runStartTime, runEndTime;
 		TimeSeries test = null, train = null;
@@ -92,7 +92,7 @@ public class HeuristicDTW extends BaseDTW {
 				if(i%100==0) {
 					try {
 					    System.out.print(i + " ");
-		                this.bwTimeAndLength.write(calcTimeAndPathLen.toString());
+		                //this.bwTimeAndLength.write(calcTimeAndPathLen.toString());
 		                this.bwAccuracy.write(accuracy.toString());
 		                this.calcTimeAndPathLen.delete(0, calcTimeAndPathLen.length());
 		                this.accuracy.delete(0, accuracy.length());
@@ -128,7 +128,7 @@ public class HeuristicDTW extends BaseDTW {
 			runTimes[runNum-1] += (runEndTime-runStartTime)/1000.0;
 			
 			try {
-				this.bwTimeAndLength.write(this.calcTimeAndPathLen.toString());
+				//this.bwTimeAndLength.write(this.calcTimeAndPathLen.toString());
 		        this.bwAccuracy.write(this.accuracy.toString());
 		        this.calcTimeAndPathLen.delete(0, this.calcTimeAndPathLen.length());
 		        this.accuracy.delete(0, this.accuracy.length());
@@ -139,8 +139,8 @@ public class HeuristicDTW extends BaseDTW {
 		this.endTime = System.currentTimeMillis();
 		totalTime += this.endTime - this.startTime;
 		try {
-			this.bwTimeAndLength.write(this.calcTimeAndPathLen.toString());
-	        this.bwTimeAndLength.close();
+			//this.bwTimeAndLength.write(this.calcTimeAndPathLen.toString());
+	        //this.bwTimeAndLength.close();
 	        this.bwAccuracy.write(this.accuracy.toString());
 			this.bwAccuracy.close();
 			

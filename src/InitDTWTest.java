@@ -21,8 +21,8 @@ public class InitDTWTest {
 	protected static String helpSwitch = "h",
 							helpSwitchLong = "help";
 	
-	protected static String bandSwitch = "b",
-							bandSwitchLong = "band";
+	protected static String bandSwitch = "w",
+							bandSwitchLong = "window";
 	
 	protected static String twTypeSwitch = "t",
 							twTypeSwitchLong = "type";
@@ -56,12 +56,12 @@ public class InitDTWTest {
 			fileName = cmdLine.getOptionValue(fileSwitch);
 			outDir = cmdLine.getOptionValue(outDirSwitch, "");
 			window = Integer.parseInt(cmdLine.getOptionValue(bandSwitch, "100"));
-			dtwType = cmdLine.getOptionValue(twTypeSwitch, "N");
+			dtwType = cmdLine.getOptionValue(twTypeSwitch, "R");
 			
-			if (dtwType.equals("H")) {
+			if (dtwType.equals("R")) {
 				rng = cmdLine.getOptionValue(rngSwitch, "G");
-				ranking = cmdLine.getOptionValue(rankingTypeSwitch, "L");					
-				passes = cmdLine.getOptionValue(passesSwitch, "5");
+				ranking = cmdLine.getOptionValue(rankingTypeSwitch, "E");					
+				passes = cmdLine.getOptionValue(passesSwitch, "0");
 			}
 			
 			if (cmdLine.hasOption(segmentSwitch)) {
@@ -82,7 +82,7 @@ public class InitDTWTest {
         System.out.println("Start:\t\t" + start);
         System.out.println("End:\t\t" + inc);
         System.out.println("Window:\t\t" + window);
-        if(dtwType.equals("H")) {
+        if(dtwType.equals("R")) {
             System.out.println("Ranking:\t" + dtwType);
             System.out.println("Passes:\t\t" + passes);
             System.out.println("RNG:\t\t" + rng);
@@ -100,8 +100,15 @@ public class InitDTWTest {
 				dtw = new LuckyDTW(fileName, outDir, window, start, inc);
 				dtw.execute();
 				break;
-			case "H":
-				dtw = new HeuristicDTW(fileName, outDir, window, ranking, passes, rng, start, inc);
+			case "R":
+			    String dirPath = "";
+			    if(ranking.equals("E")) {
+			        dirPath = "exp/";
+			    } else {
+			        dirPath = "lin/";
+			    }
+			    dirPath += passes;
+				dtw = new HeuristicDTW(fileName, dirPath+outDir, window, ranking, passes, rng, start, inc);
 				dtw.execute();
 				break;
 		}
@@ -138,34 +145,33 @@ public class InitDTWTest {
     	datafileName.setArgs(1);
     	datafileName.setArgName("dataset");
     	
-    	Option outputDir = new Option(outDirSwitch, "directory to use for saving the results");
-    	outputDir.setLongOpt(outDirSwitchLong);
-    	outputDir.setArgs(1);
-    	outputDir.setArgName("directory");
+    	Option dtwType = new Option(twTypeSwitch, "defines the DTW type, valid options are R - RandomizedTW (default), N - Normal DTW, L - LuckyTW");
+    	dtwType.setLongOpt(twTypeSwitchLong);
+    	dtwType.setArgs(1);
+    	dtwType.setArgName("warpingType");
     	
     	Option winSz = new Option(bandSwitch, "DTW window size as a percentage e.g. 1, 5, 10 100 (default)");
     	winSz.setLongOpt(bandSwitchLong);
     	winSz.setArgs(1);
     	winSz.setArgName("percent");
     	
-    	Option dtwType = new Option(twTypeSwitch, "defines the DTW type, valid options are N (default), L, and H for Normal, Lucky, and Heuristic");
-    	dtwType.setLongOpt(twTypeSwitchLong);
-    	dtwType.setArgs(1);
-    	dtwType.setArgName("warpingType");
+    	Option outputDir = new Option(outDirSwitch, "sub-directory of data directory to use for saving the results");
+    	outputDir.setLongOpt(outDirSwitchLong);
+    	outputDir.setArgs(1);
+    	outputDir.setArgName("directory");
     	
-    	Option rngType = new Option(rngSwitch, "defines the RNG type, valid options are N (normally distributed random numbers - default), "+
-    								"U (uniformly distributed random numbers)");
+    	Option rngType = new Option(rngSwitch, "defines the RNG type, valid options are G (Gaussian random numbers - default), U (Uniform random numbers)");
     	rngType.setLongOpt(rngSwitchLong);
     	rngType.setArgs(1);
     	rngType.setArgName("rngType");
     	
-    	Option passes = new Option(passesSwitch, "number of restarts for heuristic DTW calculations 0 (no restarts), " + 
+    	Option passes = new Option(passesSwitch, "number of restarts for heuristic DTW calculations 0 (no restarts - default), " + 
     							   "I (increasing with number of runs), positive integer (for constant number of restarts)");
     	passes.setLongOpt(passesSwitchLong);
     	passes.setArgs(1);
     	passes.setArgName("number");
     	
-    	Option ranking = new Option(rankingTypeSwitch, "type of ranking to use e.g. L (linear - default), E (exponential)");
+    	Option ranking = new Option(rankingTypeSwitch, "type of ranking to use e.g. E (exponential - default), L (linear)");
     	ranking.setLongOpt(rankingTypeSwitchLong);
     	ranking.setArgs(1);
     	ranking.setArgName("method");

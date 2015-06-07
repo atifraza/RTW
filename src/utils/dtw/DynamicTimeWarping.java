@@ -21,7 +21,7 @@ import utils.dtw.WarpInfo;
 public class DynamicTimeWarping {
 	private double[][] costMatrix;
 	private int windowLen;
-	private int rankingMethod = 1;		// 1: Linear Ranking (default), 2: Exponential Ranking, 3: SkewedNormal
+	private int rankingMethod = 2;		// 1: Linear Ranking, 2: Exponential Ranking (default), 3: SkewedNormal
 	private RandomGenerator rng;
 	private AbstractRealDistribution rand;
 	private int distributionType;
@@ -30,8 +30,6 @@ public class DynamicTimeWarping {
 	private double MEAN = 1.0,
 				   STD_DEV = 1.0/3.0;
 	private double SKEW = 0;
-//	private double ALPHA = 2.0,
-//				   BETA = 2.0;
 	
 	public DynamicTimeWarping() {
 		
@@ -76,10 +74,6 @@ public class DynamicTimeWarping {
 				rand = new SkewedNormalDistribution(rng, MEAN, STD_DEV, SKEW);
 				distributionType = 3;
 				break;
-//			case "B":
-//				rand = new BetaDistribution(ALPHA, BETA);
-//				distributionType = 4;
-//				break;
 		}
 	}
 	
@@ -89,12 +83,6 @@ public class DynamicTimeWarping {
 			//(double)(i-j)/tsLen;
 			((SkewedNormalDistribution) rand).updateParams(MEAN, STD_DEV, SKEW);
 		} 
-//		else if(this.distributionType == 4) {
-//			double theta = (double)(i-j)/tsLen;
-//			ALPHA -= theta;
-//			BETA += theta;
-//			rand = new BetaDistribution(ALPHA, BETA);
-//		}
 	}
 	
  	private double[] rankCandidates(double cRight, double cDiag, double cDown) {
@@ -132,13 +120,6 @@ public class DynamicTimeWarping {
 		double selProb;							// Selection probability
 		boolean isValidCellChosen;
 
-//		int w;	// window size for calculation of cost matrix entries if windowSize is zero we got to a 1 length window equal to euclidean dist
-//		if (windowPercent == 0) {
-//			w = 1;
-//		} else {
-//			w = Math.max( (int) Math.ceil( windowPercent*maxI/100.0 ), Math.abs(maxI-maxJ));
-//		}
-		
 		for(double[] current : costMatrix) {	// Assign positive infinity to entire matrix
 			Arrays.fill(current, Double.POSITIVE_INFINITY);
 		}
@@ -148,19 +129,18 @@ public class DynamicTimeWarping {
 //		The following code statement is adding the entries to the warping path. To record the
 //		warping path as well, uncomment the statements "info.addLast(i, j);"
 //		info.addLast(i, j);
+// ################################################################################################
 		while(i<maxI && j<maxJ) {
 			if(i+1<maxI && j+1<maxJ) {		// Check if move to diagonal element is valid
 				costDiag = distFn.calcDistance(tsI.get(i+1), tsJ.get(j+1));
 			} else {
 				costDiag = 1e12;
 			}
-			//if(i+1<maxI && Math.abs(i+1-j)<windowLen) { // OLD Conditional, following is better to understand
 			if(i+1<Math.min(windowLen+j, maxI)) {	// Check if moving downwards is valid
 				costDown = distFn.calcDistance(tsI.get(i+1), tsJ.get(j));
 			} else {
 				costDown = 1e12;
 			}
-			//if(j+1<maxJ && Math.abs(j+1-i)<maxI) { // OLD Conditional, following is better to understand
 			if(j+1<Math.min(windowLen+i, maxJ)) {	// Check if moving right is valid
 				costRight = distFn.calcDistance(tsI.get(i), tsJ.get(j+1));
 			} else {
@@ -171,26 +151,6 @@ public class DynamicTimeWarping {
 			probs = this.rankCandidates(costRight, costDiag, costDown);
 			
 			while(!isValidCellChosen) {		// loop used for times when we are at the end of warping path but a valid cell can't be chosen
-//				if (distribution == 1) {
-//					selProb = rand.nextDouble() * 2.0;	// generate a uniform random number
-//					// the random number is between 0 and 1 so we multiply it with
-//					// 2 to get it between 0 and 2 
-//				} else {
-//					selProb = MEAN + rand.nextGaussian()*STD_DEV;	// generate a normally distributed
-//					// random number, it has a mean at 0 and a std of 1, so we add MEAN to it
-//					// to shift it's mean to 1 and multiply it with STANDARD DEVIATION to generate random
-//					// numbers within required Standard Deviation
-//					// Previously we were checking the selProb each time we got a random number and
-//					// restricted it between 0 and 2 however it was counterproductive. because we were only
-//					// basing our decision on whether the number was < or > a given probability so even if
-//					// it turns out to be < 0 or > 2, it still is a good number to base our decision
-//				}
-				// Previously, we are checking if the selProb was <= probs[0] then we chose to go right.
-				// If selProb was > probs[0] but <= probs[1] we moved to the diagonal.
-				// and if it was > probs[1] as well we moved to the down ward location
-				// however that was inefficient. now we are generating 2 probabilities instead of 3 and
-				// only check for the selProb be to < probs[0] to go right or > probs[1] to go down and
-				// to go diagonally if none of the 2 cases are true
 				selProb = rand.sample();
 				if(selProb < probs[0] && i<maxI && j+1<maxJ && j+1<j+windowLen) {	// j+1<j+windowLen added to restrict going out of window
 					// Moving one cell Right
@@ -212,6 +172,7 @@ public class DynamicTimeWarping {
 // ################################################################################################
 //					The following code statement is adding the entries to the warping path.
 //					info.addLast(i, j);
+// ################################################################################################					
 					Arrays.fill(probs, 0);				// reinitialize the probs array to all zeros
 					if(this.distributionType == 3) {
 						updateProbDist(i, j, maxI);
@@ -236,13 +197,6 @@ public class DynamicTimeWarping {
 		
 		double costDiag, costRight, costDown;	// cost variables for prospective successive directions 
 		
-//		int w;	// window size for calculation of cost matrix entries if windowSize is zero we got to a 1 length window equal to euclidean dist
-//		if (windowPercent == 0) {
-//			w = 1;
-//		} else {
-//			w = Math.max( (int) Math.ceil( windowPercent*maxI/100.0 ), Math.abs(maxI-maxJ));
-//		}
-		
 		for(double[] current : costMatrix) {	// Assign positive infinity to entire matrix
 			Arrays.fill(current, Double.POSITIVE_INFINITY);
 		}
@@ -252,20 +206,18 @@ public class DynamicTimeWarping {
 //		record the warping path as well, uncomment the statements "info.addLast(i, j);"
 //		One other statement is in the body of the while loop 
 //		info.addLast(i, j);
-		
+// ################################################################################################
 		while(i<maxI && j<maxJ) {
 			if(i+1<maxI && j+1<maxJ) {
 				costDiag = distFn.calcDistance(tsI.get(i+1), tsJ.get(j+1));
 			} else {
 				costDiag = 1e12;
 			}
-			//if(i+1<maxI && Math.abs(i+1-j)<windowLen) { // OLD Conditional, following is better to understand
 			if(i+1<Math.min(windowLen+j, maxI)) {
 				costDown = distFn.calcDistance(tsI.get(i+1), tsJ.get(j));
 			} else {
 				costDown = 1e12;
 			}
-			//if(j+1<maxJ && Math.abs(j+1-i)<maxI) { // OLD Conditional, following is better to understand
 			if(j+1<Math.min(windowLen+i, maxJ)) {
 				costRight = distFn.calcDistance(tsI.get(i), tsJ.get(j+1));
 			} else {
@@ -293,6 +245,7 @@ public class DynamicTimeWarping {
 // ################################################################################################
 //			The following code statement is adding the entries to the warping path as per LuckyTW.
 //			info.addLast(i, j);
+// ################################################################################################
 			if(i+1==maxI && j+1==maxJ) {
 				info.setWarpDistance(costMatrix[i][j]);
 				break;
@@ -308,13 +261,6 @@ public class DynamicTimeWarping {
 			Arrays.fill(current, Double.POSITIVE_INFINITY);
 		}
 		if(windowLen<maxI) {
-//			int w;	// window size for calculation of cost matrix entries if windowSize is zero we got to a 1 length window equal to euclidean dist
-//			if (windowPercent == 0) {
-//				w = 1;
-//			} else {
-//				w = Math.max( (int) Math.ceil( windowPercent*maxI/100.0 ), Math.abs(maxI-maxJ));
-//			}
-
 			costMatrix[0][0] = distFn.calcDistance(tsI.get(0), tsJ.get(0));
 			for(int j=1; j<windowLen; j++) {
 				costMatrix[0][j] = costMatrix[0][j-1] + distFn.calcDistance(tsI.get(0), tsJ.get(j));
@@ -393,6 +339,7 @@ public class DynamicTimeWarping {
 //			}
 //			info.addFirst(i, j);
 //		}
+// ################################################################################################
 		return info;
 	}
 
