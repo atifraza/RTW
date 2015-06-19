@@ -139,18 +139,18 @@ public class InitDTWTest {
     	Option help = new Option(helpSwitch, "prints the help for the program");
     	help.setLongOpt(helpSwitchLong);
     	
-    	Option datafileName = new Option(fileSwitch, "name of the dataset");
+    	Option datafileName = new Option(fileSwitch, "name of the dataset - REQUIRED Parameter");
     	datafileName.setLongOpt(fileSwitchLong);
     	datafileName.setRequired(true);
     	datafileName.setArgs(1);
     	datafileName.setArgName("dataset");
     	
-    	Option dtwType = new Option(twTypeSwitch, "defines the DTW type, valid options are R - RandomizedTW (default), N - Normal DTW, L - LuckyTW");
+    	Option dtwType = new Option(twTypeSwitch, "defines the warping type, valid options are R - RandomizedTW (default), N - Normal DTW, L - LuckyTW");
     	dtwType.setLongOpt(twTypeSwitchLong);
     	dtwType.setArgs(1);
     	dtwType.setArgName("warpingType");
     	
-    	Option winSz = new Option(bandSwitch, "DTW window size as a percentage e.g. 1, 5, 10 100 (default)");
+    	Option winSz = new Option(bandSwitch, "Warping window size as a percentage e.g. 1, 5, 10, 100 (default)");
     	winSz.setLongOpt(bandSwitchLong);
     	winSz.setArgs(1);
     	winSz.setArgName("percent");
@@ -165,8 +165,7 @@ public class InitDTWTest {
     	rngType.setArgs(1);
     	rngType.setArgName("rngType");
     	
-    	Option passes = new Option(passesSwitch, "number of restarts for heuristic DTW calculations 0 (no restarts - default), " + 
-    							   "I (increasing with number of runs), positive integer (for constant number of restarts)");
+    	Option passes = new Option(passesSwitch, "number of restarts for RandomizedTW calculations 0 (no restarts - default), I (increasing with number of runs), positive integer (for constant number of restarts)");
     	passes.setLongOpt(passesSwitchLong);
     	passes.setArgs(1);
     	passes.setArgName("number");
@@ -176,7 +175,7 @@ public class InitDTWTest {
     	ranking.setArgs(1);
     	ranking.setArgName("method");
     	
-    	Option segment = new Option(segmentSwitch, "calculates the DTW of the instances starting from 'start' and upto 'start+increment' from the test set");
+    	Option segment = new Option(segmentSwitch, "calculates the warping of the instances starting from 'start' and upto 'start+increment' from the test set");
     	segment.setArgs(2);
     	segment.setArgName("startPoint> <increment");   	
     	
