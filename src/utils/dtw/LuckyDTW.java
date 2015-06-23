@@ -50,36 +50,38 @@ public class LuckyDTW extends BaseDTW {
 		TimeSeries test = null, train = null;
 		int classPredicted;
 		double bestDist;
+		double outerStep = Math.round((endIndex-startIndex)/10.0);
 		this.startTime = System.currentTimeMillis();
-		for(int i=startIndex; i<endIndex; i++) {
-			if(i%100==0) {
-				try {
-				    System.out.print(i + " ");
-	                //this.bwTimeAndLength.write(calcTimeAndPathLen.toString());
-	                this.bwAccuracy.write(accuracy.toString());
-	                this.calcTimeAndPathLen.delete(0, calcTimeAndPathLen.length());
-	                this.accuracy.delete(0, accuracy.length());
-                } catch (IOException e) {
-	                e.printStackTrace();
-                }
-			}
-			test = testSet.get(i);
-			bestDist = Double.POSITIVE_INFINITY;
-			classPredicted = 0;
-			for(int j=0; j<trainSet.size(); j++) {
-				train = trainSet.get(j);
-				instStartTime = System.currentTimeMillis();
-				warpInfo = warp.getLuckyDTW(test, train, distFn);
-				if(warpInfo.getWarpDistance()<bestDist) {
-					bestDist = warpInfo.getWarpDistance();
-					classPredicted = train.getTSClass();
-				}
-				instEndTime = System.currentTimeMillis();
-				instProcessingTime = instEndTime - instStartTime;
-				this.calcTimeAndPathLen.append(windowSize+","+i+","+j+","+instProcessingTime+","+warpInfo.getWarpPathLength()+"\n");
-			}
-			this.accuracy.append(windowSize+","+i+","+test.getTSClass()+","+classPredicted+"\n");
-		}
+        for(int h=0; h<endIndex; h+=outerStep) {
+            try {
+                System.out.print((int)Math.floor(100.0*h/(endIndex-startIndex)) + "% ");
+                //this.bwTimeAndLength.write(calcTimeAndPathLen.toString());
+                this.bwAccuracy.write(accuracy.toString());
+                this.calcTimeAndPathLen.delete(0, calcTimeAndPathLen.length());
+                this.accuracy.delete(0, accuracy.length());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+    		for(int i=0; i<outerStep && (i+h)<endIndex; i++) {
+    			test = testSet.get(i+h);
+    			bestDist = Double.POSITIVE_INFINITY;
+    			classPredicted = 0;
+    			for(int j=0; j<trainSet.size(); j++) {
+    				train = trainSet.get(j);
+    				instStartTime = System.currentTimeMillis();
+    				warpInfo = warp.getLuckyDTW(test, train, distFn);
+    				if(warpInfo.getWarpDistance()<bestDist) {
+    					bestDist = warpInfo.getWarpDistance();
+    					classPredicted = train.getTSClass();
+    				}
+    				instEndTime = System.currentTimeMillis();
+    				instProcessingTime = instEndTime - instStartTime;
+    				this.calcTimeAndPathLen.append(windowSize+","+i+","+j+","+instProcessingTime+","+warpInfo.getWarpPathLength()+"\n");
+    			}
+    			this.accuracy.append(windowSize+","+(i+h)+","+test.getTSClass()+","+classPredicted+"\n");
+    		}
+        }
+        System.out.print("100%");
 		this.endTime = System.currentTimeMillis();
 		totalTime += this.endTime - this.startTime;
 		try {

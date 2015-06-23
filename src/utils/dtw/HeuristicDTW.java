@@ -74,6 +74,7 @@ public class HeuristicDTW extends BaseDTW {
 		int classPredicted, bestPathLength;
 		int maxRunsLimit = 0;
 		double bestDist;
+		double outerStep = Math.round((endIndex-startIndex)/10.0);
 		this.startTime = System.currentTimeMillis();
 		for(int runNum = 1; runNum<=maxRuns; runNum++) {
 		    System.out.println("\nRun Num: " + runNum);
@@ -88,42 +89,43 @@ public class HeuristicDTW extends BaseDTW {
 				default:
 					maxRunsLimit = Math.abs(Integer.parseInt(numRestarts));
 			}
-			for(int i=startIndex; i<endIndex; i++) {
-				if(i%100==0) {
-					try {
-					    System.out.print(i + " ");
-		                //this.bwTimeAndLength.write(calcTimeAndPathLen.toString());
-		                this.bwAccuracy.write(accuracy.toString());
-		                this.calcTimeAndPathLen.delete(0, calcTimeAndPathLen.length());
-		                this.accuracy.delete(0, accuracy.length());
-	                } catch (IOException e) {
-		                e.printStackTrace();
-	                }
-				}
-				test = testSet.get(i);
-				bestDist = Double.POSITIVE_INFINITY;
-				classPredicted = 0;
-				bestPathLength = 0;
-				for(int j=0; j<trainSet.size(); j++) {
-					train = trainSet.get(j);
-					instStartTime = System.currentTimeMillis();
-//					for(int instRunNum = 0; instRunNum<1; instRunNum++) {		// 0 Restarts
-//					for(int instRunNum = 0; instRunNum<maxRuns; instRunNum++) {	// Constant Restarts [equal to runs]
-//					for(int instRunNum = 0; instRunNum<runNum; instRunNum++) {	// Increasing Restarts
-					for(int instRunNum = 0; instRunNum<maxRunsLimit; instRunNum++) {		// 0 Restarts
-						warpInfo = warp.getHeuristicDTW(test, train, distFn);
-						if(warpInfo.getWarpDistance()<bestDist) {
-							bestDist = warpInfo.getWarpDistance();
-							classPredicted = train.getTSClass();
-							bestPathLength = warpInfo.getWarpPathLength();
-						}						
-					}
-					instEndTime = System.currentTimeMillis();
-					instProcessingTime = instEndTime - instStartTime;
-					this.calcTimeAndPathLen.append(runNum+","+windowSize+","+i+","+j+","+instProcessingTime+","+bestPathLength+"\n");
-				}
-				this.accuracy.append(runNum+","+windowSize+","+i+","+test.getTSClass()+","+classPredicted+"\n");
-			}
+            for(int h=0; h<endIndex; h+=outerStep) {
+                try {
+                    System.out.print((int)Math.floor(100.0*h/(endIndex-startIndex)) + "% ");
+                    //this.bwTimeAndLength.write(calcTimeAndPathLen.toString());
+                    this.bwAccuracy.write(accuracy.toString());
+                    this.calcTimeAndPathLen.delete(0, calcTimeAndPathLen.length());
+                    this.accuracy.delete(0, accuracy.length());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                for(int i=0; i<outerStep && (i+h)<endIndex; i++) {
+                    test = testSet.get(i+h);
+                    bestDist = Double.POSITIVE_INFINITY;
+                    classPredicted = 0;
+                    bestPathLength = 0;
+                    for(int j=0; j<trainSet.size(); j++) {
+                        train = trainSet.get(j);
+                        instStartTime = System.currentTimeMillis();
+//                      for(int instRunNum = 0; instRunNum<1; instRunNum++) {       // 0 Restarts
+//                      for(int instRunNum = 0; instRunNum<maxRuns; instRunNum++) { // Constant Restarts [equal to runs]
+//                      for(int instRunNum = 0; instRunNum<runNum; instRunNum++) {  // Increasing Restarts
+                        for(int instRunNum = 0; instRunNum<maxRunsLimit; instRunNum++) {        // 0 Restarts
+                            warpInfo = warp.getHeuristicDTW(test, train, distFn);
+                            if(warpInfo.getWarpDistance()<bestDist) {
+                                bestDist = warpInfo.getWarpDistance();
+                                classPredicted = train.getTSClass();
+                                bestPathLength = warpInfo.getWarpPathLength();
+                            }                       
+                        }
+                        instEndTime = System.currentTimeMillis();
+                        instProcessingTime = instEndTime - instStartTime;
+                        this.calcTimeAndPathLen.append(runNum+","+windowSize+","+i+","+j+","+instProcessingTime+","+bestPathLength+"\n");
+                    }
+                    this.accuracy.append(runNum+","+windowSize+","+(i+h)+","+test.getTSClass()+","+classPredicted+"\n");
+                }
+            }
+            System.out.print("100%");
 			runEndTime = System.currentTimeMillis();
 			runTimes[runNum-1] += (runEndTime-runStartTime)/1000.0;
 			
