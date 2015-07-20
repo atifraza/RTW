@@ -101,6 +101,10 @@ public class DynamicTimeWarping {
 			costSum = (cRight + cDiag + cDown)/2.0;  
 			probs[0] = cRight/costSum;
 			probs[1] = cDiag/costSum+probs[0];
+			if( Double.isNaN(probs[0]) && Double.isNaN(probs[1])) {
+			    probs[0] = 0.5;
+			    probs[1] = 1.5;
+			}
 		}
 		
 		return probs;
