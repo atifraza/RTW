@@ -9,13 +9,14 @@ fileNames = {'synthetic_control'};
 %     'Haptics', 'InlineSkate', 'ItalyPowerDemand', 'MALLAT', 'MedicalImages', ...
 %     'MoteStrain', 'SonyAIBORobotSurfaceII', 'SonyAIBORobotSurface', ...
 %     'StarLightCurves', 'Symbols', 'TwoLeadECG', 'WordsSynonyms', 'Cricket_X', ...
-%     'Cricket_Y', 'Cricket_Z', 'uWaveGestureLibrary_X', 'uWaveGestureLibrary_Y',...
+%     'Cricket_Y', 'Cricket_Z', 'uWaveGestureLibrary_X', 'uWaveGestureLibrary_Y', ...
 %     'uWaveGestureLibrary_Z', 'NonInvasiveFatalECG_Thorax1', 'NonInvasiveFatalECG_Thorax2'};
 
 fSz = 12;
-restarts = {'0'}; %, 'I', '10'
+restarts = {'0','10'}; %, 'I' 
 rankingType = 'exp'; %lin
-distType = {'Euclidean', 'Normal', 'Lucky', 'Gaussian', 'Uniform'}; %, 'SkewedNormal'
+distType = {'Euclidean', 'Normal', 'Lucky', 'Uniform', 'Gaussian'}; %, 'SkewedNormal'
+distType2= {'ED', 'DTW', 'LTW', 'RTW-Uniform', 'RTW-Gaussian'}; %, 'SkewedNormal'
 filePostfix = {'_Accuracy.csv', '_TotalTime.csv', '_RunTime.csv'};
 windowSize = [100, 20, 15, 10, 5];
 numRuns = 10;
@@ -29,20 +30,20 @@ posGaus = find(ismember(distType,'Gaussian'));
 posUnif = find(ismember(distType,'Uniform'));
 posSkew = find(ismember(distType,'SkewedNormal'));
 
-color_mat = [100,100,100;...  % Euclidean
-             255,0,  0;...    % Normal DTW
-             0,  0,  0];      % Lucky DTW
+color_mat = [228, 26, 28;...    % Euclidean
+              55,126,184;...    % Normal DTW
+              77,175, 74];      % Lucky DTW
 if(posUnif)
     color_mat = [color_mat;...
-                 0,255,0];    % Uniform
+                 152, 78,163];  % Uniform
 end
 if(posGaus)
     color_mat = [color_mat;...
-                 0,0,255];    % Gaussian
+                 255,127,  0];  % Gaussian
 end
 if(posSkew)
     color_mat = [color_mat;...
-                 0,255,255]; % SkewedNormal
+                 255,255, 51];  % SkewedNormal
 end
 
 dir.Base    = '../results';
@@ -107,7 +108,7 @@ for restart = restarts
             end
         end
     end
-    clear dataRow dirString fileNameString fileObtainedResults filePostfix fileRunTime fileTotalTime firstRowData obtainedClassification runTimes totalTime type 
+%     clear dataRow dirString fileNameString fileObtainedResults filePostfix fileRunTime fileTotalTime firstRowData obtainedClassification runTimes totalTime type 
     
 %     save(strcat(dir.Base, dir.Out, 'compiled.mat'), 'allresults', 'classes')
 
@@ -263,7 +264,7 @@ for restart = restarts
 %             set(gcf, 'PaperPositionMode', 'manual');
 %             set(gcf, 'PaperPosition',[0 0 pos(3)+ti(1)+ti(3) pos(4)+ti(2)+ti(4)]);
 
-            [ax, h1, h2] = plotyy(x, (rt_Combined/allresults.(fileNameVar).Lucky.(windowName).totalTime),...
+            [ax, h1, h2] = plotyy(x, (rt_Combined),...%/allresults.(fileNameVar).Lucky.(windowName).totalTime),...
                                   x, acc_Combined,...
                                   'bar', 'line');
             temp = get(ax(1), 'YLim');
@@ -279,11 +280,11 @@ for restart = restarts
 
             % color_mat Defined at the start of script
             cmap = colormap(ax(1), color_mat/255);   % assign colormap to bar graph
-            markerSz=4;
-            lineWidth=1;
-            set(h2(1), 'Marker', '.', 'MarkerSize', markerSz, 'LineStyle', '--', 'LineWidth', lineWidth, 'Color', color_mat(1,:)/255);
-            set(h2(2), 'Marker', 's', 'MarkerSize', markerSz, 'LineStyle', '--', 'LineWidth', lineWidth, 'Color', color_mat(2,:)/255);
-            set(h2(3), 'Marker', 'd', 'MarkerSize', markerSz, 'LineStyle', '--', 'LineWidth', lineWidth, 'Color', color_mat(3,:)/255);
+            markerSz=10;
+            lineWidth=2;
+            set(h2(1), 'Marker', 'p', 'MarkerSize', markerSz, 'LineStyle', '--', 'LineWidth', lineWidth, 'Color', color_mat(1,:)/255);
+            set(h2(2), 'Marker', 'h', 'MarkerSize', markerSz, 'LineStyle', '--', 'LineWidth', lineWidth, 'Color', color_mat(2,:)/255);
+            set(h2(3), 'Marker', 's', 'MarkerSize', markerSz, 'LineStyle', '--', 'LineWidth', lineWidth, 'Color', color_mat(3,:)/255);
             if(posUnif)
                 set(h2(posUnif), 'Marker', '+', 'MarkerSize', markerSz, 'LineStyle', '--', 'LineWidth', lineWidth, 'Color', color_mat(posUnif,:)/255);
             end
@@ -291,16 +292,16 @@ for restart = restarts
                 set(h2(posGaus), 'Marker', '*', 'MarkerSize', markerSz, 'LineStyle', '--', 'LineWidth', lineWidth, 'Color', color_mat(posGaus,:)/255);
             end
             if(posSkew)
-                set(h2(posSkew), 'Marker', '^', 'MarkerSize', markerSz, 'LineStyle', '--', 'LineWidth', lineWidth, 'Color', color_mat(posSkew,:)/255);
+                set(h2(posSkew), 'Marker', 'x', 'MarkerSize', markerSz, 'LineStyle', '--', 'LineWidth', lineWidth, 'Color', color_mat(posSkew,:)/255);
             end
 
-            title([num2str(window) '% window'], 'FontSize', fSz+1)
-            ylabel(ax(1), 'Run Time (Multiples of LTW Run Time)', 'FontSize', fSz) %, 'FontName', fontName
+            title({strcat(char(fileNames(ind)), ' - Window size: ', num2str(window), '%');''}, 'Interpreter', 'none', 'FontSize', fSz+4)
+%             ylabel(ax(1), 'Run Time (Multiples of LTW Run Time)', 'FontSize', fSz) %, 'FontName', fontName
+            ylabel(ax(1), 'Run Time (seconds)', 'FontSize', fSz) %, 'FontName', fontName
             ylabel(ax(2), 'Accuracy (percentage)', 'FontSize', fSz) %, 'FontName', fontName
-            hLegend = legend(ax(2), distType, 'Location', 'best'); %
-            legend('boxoff')
+            hLegend = legend(ax(2), distType2, 'Location', 'NorthOutside', 'Orientation', 'horizontal', 'Color', 'none'); %
 %             print(gcf, '-depsc', '-r300', char(strcat(dir.Out, fileNames(ind), '/',windowName, '_Restarts', runType, '.eps')));
-            print(gcf, '-dpng', '-r150', char(strcat(dir.Out, fileNames(ind), '/',windowName, '_Restarts', runType, '.png')));
+            print(gcf, '-dpng', '-r0', char(strcat(dir.Out, fileNames(ind), '/',windowName, '_Restarts', runType, '.png')));
             close gcf
         end
     end
@@ -314,20 +315,20 @@ for restart = restarts
     end
     deterministic = [1,2,3];
     tempsum = zeros(1,3);
-    for win = windowSize
-        if(win == 0)
+    for window = windowSize
+        if(window == 0)
             continue;
         end
-        windowName = strcat('W_', num2str(win));
+        windowName = strcat('W_', num2str(window));
         % start plotting the errors
-        mkdir( strcat(dir.Out, 'Accuracy_', num2str(win)) )
+        mkdir( strcat(dir.Out, 'Accuracy/', num2str(window)) )
+        mkdir( strcat(dir.Out, 'Ratios/', num2str(window)) )
         distNum = 1;
         for heu = 1:2:2*(length(distType)-3)
             for det = 1:length(deterministic)
                 figure
                 axis tight;
                 set(gcf, 'Units','inches', 'Position',[0 0 8 8])
-%                 title([char(xlabelString(deterministic(det))) ' vs ' char(ylabelString(heu))], 'FontSize', fSz)
                 hold on; grid on; axis square
                 xlim([-2 102]);ylim([-2 102]);
                 plot(x-2,y, 'Color', [0.8 0.8 0.8], 'LineWidth', 1);
@@ -337,14 +338,40 @@ for restart = restarts
                         abs(accuracyMat.(windowName)(:,deterministic(det))-accuracyMat.(windowName)(:,3+heu))<2,...
                         (accuracyMat.(windowName)(:,deterministic(det))-accuracyMat.(windowName)(:,3+heu))>2];
 %                 tempsum = [tempsum; sum(temp)];
-                scatter(accuracyMat.(windowName)(temp(:,1),deterministic(det)), accuracyMat.(windowName)(temp(:,1),3+heu), 180, '+')
-                scatter(accuracyMat.(windowName)(temp(:,3),deterministic(det)), accuracyMat.(windowName)(temp(:,3),3+heu), 180, 'x')
-                scatter(accuracyMat.(windowName)(temp(:,2),deterministic(det)), accuracyMat.(windowName)(temp(:,2),3+heu), 180, '.')
-                xlabel(char(xlabelString(det)), 'FontSize', fSz) %, 'FontName', fontName
-                ylabel(char(ylabelString(distNum)), 'FontSize', fSz) %, 'FontName', fontName
+                scatter(accuracyMat.(windowName)(temp(:,1),deterministic(det)), accuracyMat.(windowName)(temp(:,1),3+heu), 180, '+');
+                scatter(accuracyMat.(windowName)(temp(:,3),deterministic(det)), accuracyMat.(windowName)(temp(:,3),3+heu), 180, 'x');
+                scatter(accuracyMat.(windowName)(temp(:,2),deterministic(det)), accuracyMat.(windowName)(temp(:,2),3+heu), 180, '.');
+                title(strcat('Accuracy-Accuracy plot - Window size: ', num2str(window), '%'), 'FontSize', fSz+1);
+                xlabel(char(xlabelString(det)), 'FontSize', fSz); %, 'FontName', fontName
+                ylabel(char(ylabelString(distNum)), 'FontSize', fSz); %, 'FontName', fontName
 
-%                 print(gcf, '-depsc', '-r300', char(strcat(dir.Out, 'Accuracy_', num2str(win), '/', char(ylabelString(heu)), 'Vs', char(xlabelString(det)), '.eps')));
-                print(gcf, '-dpng', '-r150', char(strcat(dir.Out, 'Accuracy_', num2str(win), '/', char(ylabelString(distNum)), 'Vs', char(xlabelString(det)), '.png')));
+%                 print(gcf, '-depsc', '-r300', char(strcat(dir.Out, 'Accuracy/', num2str(window), '/', char(ylabelString(heu)), 'Vs', char(xlabelString(det)), '.eps')));
+                print(gcf, '-dpng', '-r0', char(strcat(dir.Out, 'Accuracy/', num2str(window), '/', char(ylabelString(distNum)), 'Vs', char(xlabelString(det)), '.png')));
+                close gcf
+                % Plot a ratio by ratio plot for accuracy and runtime
+                figure;
+                axis tight;
+                set(gcf, 'Units','inches', 'Position',[0 0 4 4]);
+                maxAcc = max([accuracyMat.(windowName)(:,deterministic(det)),accuracyMat.(windowName)(:,3+heu)],[],2);
+                maxRT = max([rtMat.(windowName)(:,deterministic(det)),rtMat.(windowName)(:,3+distNum)],[],2);
+                accRatio = 1+((accuracyMat.(windowName)(:,3+heu)-accuracyMat.(windowName)(:,deterministic(det)))./maxAcc);
+                min(accRatio);
+                max(accRatio);
+                rtRatio = 1+((rtMat.(windowName)(:,3+distNum)-rtMat.(windowName)(:,deterministic(det)))./maxRT);
+                min(rtRatio);
+                max(rtRatio);
+                scatter(accRatio,rtRatio,180,'.');
+                get(gca,'TightInset');
+                hold on;
+                title(strcat('Ratio of Accuracy and Runtime between ', ylabelString(distNum), ' and ', xlabelString(det), ' - Window size: ', num2str(window), '%'), 'FontSize', fSz+1);
+                ylabel(strcat('Runtime (',char(ylabelString(distNum)),'/',char(xlabelString(det)),')'),'FontSize',fSz,'FontName','Times');
+                xlabel(strcat('Accuracy (',char(ylabelString(distNum)),'/',char(xlabelString(det)),')'),'FontSize',fSz,'FontName','Times');
+                set(gca, 'XGrid','on', 'XMinorGrid', 'off', 'YGrid','on', 'YMinorGrid', 'off','XLim',[0 2], 'YLim', [0 2]);
+                plot(0:2,[1 1 1], 'Color', [0 0 0], 'LineWidth', 2);
+                plot([1 1 1],0:2, 'Color', [0 0 0], 'LineWidth', 2);
+                
+%                 print(gcf, '-depsc', '-r300', char(strcat(dir.Out, 'Ratios/', num2str(window), '/', char(ylabelString(heu)), 'Vs', char(xlabelString(det)), '.eps')));
+                print(gcf, '-dpng', '-r0', char(strcat(dir.Out, 'Ratios/', num2str(window), '/', char(ylabelString(distNum)), 'Vs', char(xlabelString(det)), '.png')));
                 close gcf
             end
             distNum = distNum+1;
