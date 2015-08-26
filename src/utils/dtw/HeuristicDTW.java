@@ -37,6 +37,7 @@ public class HeuristicDTW extends BaseDTW {
 		this.maxRuns = 10;
 		this.runTimes = new double[this.maxRuns];
 		warp = new DynamicTimeWarping(testSet.get(0).size(), trainSet.get(0).size(), this.windowSize, ranking);
+		warp.initRNGDistribution(hType);
 
 		try {
 			this.filePath = this.rsltDir + this.fileName + "_" + this.windowSize;
@@ -66,7 +67,6 @@ public class HeuristicDTW extends BaseDTW {
 	}
 
 	public void execute() {
-		warp.initRNGDistribution(hType);
 		WarpInfo warpInfo = new WarpInfo();
 		
 		long instStartTime, instEndTime, instProcessingTime, runStartTime, runEndTime;
