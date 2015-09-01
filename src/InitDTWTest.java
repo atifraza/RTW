@@ -55,7 +55,7 @@ public class InitDTWTest {
 			
 			fileName = cmdLine.getOptionValue(fileSwitch);
 			outDir = cmdLine.getOptionValue(outDirSwitch, "");
-			window = Integer.parseInt(cmdLine.getOptionValue(bandSwitch, "100"));
+			window = Integer.parseInt(cmdLine.getOptionValue(bandSwitch, "-1"));
 			dtwType = cmdLine.getOptionValue(twTypeSwitch, "R");
 			
 			if (dtwType.equals("R")) {
@@ -108,6 +108,8 @@ public class InitDTWTest {
 			        dirPath = "lin/";
 			    }
 			    dirPath += passes;
+//                dtw = new HeuristicDTW("ItalyPowerDemand", "temp", window, ranking, passes, rng, 0, 100);
+//                dtw.execute();
 				dtw = new HeuristicDTW(fileName, dirPath+outDir, window, ranking, passes, rng, start, inc);
 				dtw.execute();
 				break;
@@ -150,7 +152,8 @@ public class InitDTWTest {
     	dtwType.setArgs(1);
     	dtwType.setArgName("warpingType");
     	
-    	Option winSz = new Option(bandSwitch, "Warping window size as a percentage e.g. 1, 5, 10, 100 (default)");
+    	Option winSz = new Option(bandSwitch, "-1 (default): Calculated through Leave One Out Cross Validation of Training Set\n"
+    	        + "or, Warping window size as a percentage e.g. 1, 5, 10, 100");
     	winSz.setLongOpt(bandSwitchLong);
     	winSz.setArgs(1);
     	winSz.setArgName("percent");

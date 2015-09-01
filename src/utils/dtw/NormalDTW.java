@@ -16,6 +16,10 @@ public class NormalDTW extends BaseDTW {
 	
 	public NormalDTW(String fName, String outDir, int window, int startIndx, int numToProcess) {
 		super(fName, outDir, window);
+        warp = new DynamicTimeWarping(testSet.get(0).size(), trainSet.get(0).size(), this.windowSize);
+        if(this.windowSize == -1) {
+            this.findBestWindow();
+        }
 		
 		this.startIndex = startIndx;
 		if(numToProcess != 0) {
@@ -24,7 +28,6 @@ public class NormalDTW extends BaseDTW {
 		} else {
 			endIndex = testSet.size();
 		}
-		warp = new DynamicTimeWarping(testSet.get(0).size(), trainSet.get(0).size(), this.windowSize);
 		
 		try {
 			this.filePath = this.rsltDir + this.fileName + "_" + this.windowSize + "_Normal";

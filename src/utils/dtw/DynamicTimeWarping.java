@@ -53,7 +53,7 @@ public class DynamicTimeWarping {
 	
 	public void setWindowSize(int tsILen, int tsJLen, int windowPercent) {
 		// window size for calculation of cost matrix entries if windowSize is zero we got to a 1 length window equal to euclidean dist
-		if (windowPercent == 0) {
+		if (windowPercent == 0 || windowPercent == -1) {
 			windowLen = 1;
 		} else {
 			windowLen = Math.max( (int) Math.ceil( windowPercent*tsILen/100.0 ), Math.abs(tsILen-tsJLen));

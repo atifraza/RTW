@@ -66,6 +66,70 @@ public class BaseDTW {
 		this.distFn = DistanceFunctionFactory.getDistFnByName("EuclideanDistance");
 	}
 	
+	public void findBestWindow() {
+	    int bestWindow = 0;
+	    double leastError = Double.MAX_VALUE;
+	    double dist;
+	    double bestDist;
+	    double currError = 0;
+	    int correctClassified;
+	    int classPredicted=0;
+	    TimeSeries testInst, trainInst;
+	    WarpInfo warpInfo = new WarpInfo();
+	    
+	    for(int currWindow = 0; currWindow<=100; currWindow++) {
+	        correctClassified = 0;
+	        System.err.print(currWindow + " ");
+	        for(int testInd=0; testInd<trainSet.size(); testInd++) {
+	            dist = Double.MAX_VALUE;
+                testInst = trainSet.get(testInd);
+                bestDist = Double.MAX_VALUE;
+                warp.setWindowSize(testInst.size(), testInst.size(), currWindow);
+	            for(int trainInd=0; trainInd<trainSet.size(); trainInd++) {
+	                if(testInd == trainInd) {
+	                    continue;
+	                } else {
+                        trainInst = trainSet.get(trainInd);
+                        if(this instanceof NormalDTW) {
+                            warpInfo = warp.getNormalDTW(testInst, trainInst, distFn);
+                            dist = warpInfo.getWarpDistance();
+                        } else if(this instanceof LuckyDTW) {
+                            warpInfo = warp.getLuckyDTW(testInst, trainInst, distFn);
+                            dist = warpInfo.getWarpDistance();
+                        } else if(this instanceof HeuristicDTW) {
+                            // Single Evaluation
+                            warpInfo = warp.getHeuristicDTW(testInst, trainInst, distFn);
+                            dist = warpInfo.getWarpDistance();
+                            // Multiple Evaluations
+//                            for(int runNum=0; runNum<10; runNum++) {
+//                                warpInfo = warp.getHeuristicDTW(testInst, trainInst, distFn);
+//                                if(warpInfo.getWarpDistance()<dist) {
+//                                    dist = warpInfo.getWarpDistance();
+//                                }
+//                            }
+                        }
+                        if(dist<bestDist) {
+                            bestDist = dist;
+                            classPredicted = trainInst.getTSClass();
+                        }
+	                }
+	            }
+	            if(testInst.getTSClass()==classPredicted) {
+	                correctClassified++;
+	            }
+	        }
+	        currError = (double)(trainSet.size()-correctClassified)/trainSet.size();
+	        if(currError<leastError) {
+	            leastError = currError;
+	            bestWindow = currWindow;
+	        }
+	    }
+	    this.windowSize = bestWindow;
+	    System.out.println();
+	    System.out.println("Best window: " + bestWindow + ", Least error: " + leastError);
+        System.out.println();
+	}
+	
 	public void execute() {
 		
 	}

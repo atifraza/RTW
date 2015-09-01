@@ -24,6 +24,11 @@ public class HeuristicDTW extends BaseDTW {
 
 	public HeuristicDTW(String fName, String outDir, int window, String ranking, String restarts, String type, int startIndx, int numToProcess) {
 		super(fName, outDir, window);
+        warp = new DynamicTimeWarping(testSet.get(0).size(), trainSet.get(0).size(), this.windowSize, ranking);
+        warp.initRNGDistribution(type);
+        if(this.windowSize == -1) {
+            this.findBestWindow();
+        }
 		
 		this.startIndex = startIndx;
 		if(numToProcess != 0) {
@@ -36,8 +41,6 @@ public class HeuristicDTW extends BaseDTW {
 		this.hType = type;
 		this.maxRuns = 10;
 		this.runTimes = new double[this.maxRuns];
-		warp = new DynamicTimeWarping(testSet.get(0).size(), trainSet.get(0).size(), this.windowSize, ranking);
-		warp.initRNGDistribution(hType);
 
 		try {
 			this.filePath = this.rsltDir + this.fileName + "_" + this.windowSize;
