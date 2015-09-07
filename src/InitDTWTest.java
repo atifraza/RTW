@@ -112,9 +112,12 @@ public class InitDTWTest {
 			        dirPath = "lin/";
 			    }
 			    dirPath += passes;
+			    if(!outDir.equals("")) {
+			        outDir += "/";
+			    }
 //                dtw = new HeuristicDTW("ItalyPowerDemand", "temp", window, ranking, passes, rng, distance, 0, 100);
 //                dtw.execute();
-				dtw = new HeuristicDTW(fileName, dirPath+outDir, window, ranking, passes, rng, distance, start, inc);
+				dtw = new HeuristicDTW(fileName, outDir+dirPath, window, ranking, passes, rng, distance, start, inc);
 				dtw.execute();
 				break;
 		}
