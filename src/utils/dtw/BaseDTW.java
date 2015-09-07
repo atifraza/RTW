@@ -98,15 +98,15 @@ public class BaseDTW {
                             dist = warpInfo.getWarpDistance();
                         } else if(this instanceof HeuristicDTW) {
                             // Single Evaluation
-                            warpInfo = warp.getHeuristicDTW(testInst, trainInst, distFn);
-                            dist = warpInfo.getWarpDistance();
+//                            warpInfo = warp.getHeuristicDTW(testInst, trainInst, distFn);
+//                            dist = warpInfo.getWarpDistance();
                             // Multiple Evaluations
-//                            for(int runNum=0; runNum<10; runNum++) {
-//                                warpInfo = warp.getHeuristicDTW(testInst, trainInst, distFn);
-//                                if(warpInfo.getWarpDistance()<dist) {
-//                                    dist = warpInfo.getWarpDistance();
-//                                }
-//                            }
+                            for(int runNum=0; runNum<100; runNum++) {
+                                warpInfo = warp.getHeuristicDTW(testInst, trainInst, distFn);
+                                if(warpInfo.getWarpDistance()<dist) {
+                                    dist = warpInfo.getWarpDistance();
+                                }
+                            }
                         }
                         if(dist<bestDist) {
                             bestDist = dist;

@@ -38,9 +38,12 @@ public class InitDTWTest {
 	
 	protected static String segmentSwitch = "segment";
 	
+	protected static String distanceTypeSwitch = "d",
+	                        distanceTypeSwitchLong = "distance";
+	
 	public static void main(String[] args) {
 		Options options = constructCLIOptions();
-		String fileName = null, outDir = null, dtwType = null, rng = null, ranking = null, passes = null;
+		String fileName = null, outDir = null, dtwType = null, rng = null, ranking = null, passes = null, distance = null;
 		int window = 0;
 		int start = 0, inc = 0;
 		
@@ -62,6 +65,7 @@ public class InitDTWTest {
 				rng = cmdLine.getOptionValue(rngSwitch, "G");
 				ranking = cmdLine.getOptionValue(rankingTypeSwitch, "E");					
 				passes = cmdLine.getOptionValue(passesSwitch, "0");
+				distance = cmdLine.getOptionValue(distanceTypeSwitch, "Euc");
 			}
 			
 			if (cmdLine.hasOption(segmentSwitch)) {
@@ -108,9 +112,9 @@ public class InitDTWTest {
 			        dirPath = "lin/";
 			    }
 			    dirPath += passes;
-//                dtw = new HeuristicDTW("ItalyPowerDemand", "temp", window, ranking, passes, rng, 0, 100);
+//                dtw = new HeuristicDTW("ItalyPowerDemand", "temp", window, ranking, passes, rng, distance, 0, 100);
 //                dtw.execute();
-				dtw = new HeuristicDTW(fileName, dirPath+outDir, window, ranking, passes, rng, start, inc);
+				dtw = new HeuristicDTW(fileName, dirPath+outDir, window, ranking, passes, rng, distance, start, inc);
 				dtw.execute();
 				break;
 		}
@@ -178,6 +182,11 @@ public class InitDTWTest {
     	ranking.setArgs(1);
     	ranking.setArgName("method");
     	
+        Option distMeasure = new Option(distanceTypeSwitch, "type of distance measure to use e.g. Euc (Euclidean - default), Man (Manhattan)");
+        distMeasure.setLongOpt(distanceTypeSwitchLong);
+        distMeasure.setArgs(1);
+        distMeasure.setArgName("distMeasure");
+        
     	Option segment = new Option(segmentSwitch, "calculates the warping of the instances starting from 'start' and upto 'start+increment' from the test set");
     	segment.setArgs(2);
     	segment.setArgName("startPoint> <increment");   	
@@ -191,7 +200,8 @@ public class InitDTWTest {
     		.addOption(winSz)
     		.addOption(passes)
     		.addOption(segment)
-    		.addOption(ranking);
+    		.addOption(ranking)
+    		.addOption(distMeasure);
     	return opts;
     }
 }

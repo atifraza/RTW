@@ -22,8 +22,11 @@ public class HeuristicDTW extends BaseDTW {
 	private FileWriter fwRunTime;
 	private BufferedWriter bwRunTime;
 
-	public HeuristicDTW(String fName, String outDir, int window, String ranking, String restarts, String type, int startIndx, int numToProcess) {
+	public HeuristicDTW(String fName, String outDir, int window, String ranking, String restarts, String type, String distanceMeasure, int startIndx, int numToProcess) {
 		super(fName, outDir, window);
+		if(distanceMeasure.toLowerCase().equals("man")) {
+		    this.distFn = utils.distance.DistanceFunctionFactory.getDistFnByName("ManhattanDistance");
+		}
         warp = new DynamicTimeWarping(testSet.get(0).size(), trainSet.get(0).size(), this.windowSize, ranking);
         warp.initRNGDistribution(type);
         if(this.windowSize == -1) {
@@ -50,6 +53,9 @@ public class HeuristicDTW extends BaseDTW {
 				this.filePath += "_Gaussian";
 			} else if(this.hType.equals("S")) {
 				this.filePath += "_SkewedNormal";
+			}
+			if(distanceMeasure.toLowerCase().equals("man")) {
+			    this.filePath += "_Manhattan";
 			}
 			//this.fwTimeAndLength = new FileWriter(this.filePath + "_Time_Length.csv");
 			this.fwAccuracy = new FileWriter(this.filePath + "_Accuracy.csv");
