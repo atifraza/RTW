@@ -13,7 +13,7 @@ public class EuclideanDistance extends BaseDTW {
 	protected long startTime, endTime;
 	
 	public EuclideanDistance(String fName, String outDir, int startIndx, int numToProcess) {
-		super(fName, outDir, 0);
+		super(fName, outDir);
 		
 		this.startIndex = startIndx;
 		if(numToProcess != 0) {

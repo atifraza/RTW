@@ -8,8 +8,7 @@ import java.io.FileWriter;
 import java.util.ArrayList;
 
 import utils.timeseries.TimeSeries;
-import utils.distance.DistanceFunction;
-import utils.distance.DistanceFunctionFactory;
+import utils.distance.*;
 
 public class BaseDTW {
 	protected String fileName,		// Filename of the data set to process
@@ -44,26 +43,39 @@ public class BaseDTW {
 	
 	protected int startIndex, endIndex;
 	
-	public BaseDTW(String fName, String outDir, int window) {
-		this.fileName = fName;
+    public BaseDTW(String fName, String outDir) {
+        this.fileName = fName;
+        this.totalTime = 0;
+        this.appendResults = false;
+        
+        this.homeDir = System.getProperty("user.dir");
+        this.dataDir = this.homeDir + "/data/";
+        this.rsltDir = this.homeDir + "/results/";
+        if(!outDir.equals("")) {
+            this.rsltDir += outDir + "/";
+        }
+        File createDir = new File(this.rsltDir);
+        createDir.mkdirs();
+        this.testSet = readData(this.dataDir + this.fileName + "_TEST");
+        this.trainSet = readData(this.dataDir + this.fileName + "_TRAIN");
+        
+        this.calcTimeAndPathLen = new StringBuilder();
+        this.accuracy = new StringBuilder();
+    }
+    
+	public BaseDTW(String fName, String outDir, int window, double distPower) {
+		this(fName, outDir);
 		this.windowSize = window;
-		this.totalTime = 0;
-		this.appendResults = false;
-		
-		this.homeDir = System.getProperty("user.dir");
-		this.dataDir = this.homeDir + "/data/";
-		this.rsltDir = this.homeDir + "/results/";
-		if(!outDir.equals("")) {
-			this.rsltDir += outDir + "/";
+		if(distPower == 0){
+            this.distFn = DistanceFunctionFactory.getDistFnByName("BinaryDistance");
+        } else if(distPower == 1) {
+		    this.distFn = DistanceFunctionFactory.getDistFnByName("ManhattanDistance");
+		} else if(distPower == 2) {
+            this.distFn = DistanceFunctionFactory.getDistFnByName("EuclideanDistance");
+        } else {
+		    this.distFn = DistanceFunctionFactory.getDistFnByName("LpNormDistance");
+		    ((LpNormDistance)this.distFn).setPower(distPower);
 		}
-		File createDir = new File(this.rsltDir);
-		createDir.mkdirs();
-		this.testSet = readData(this.dataDir + this.fileName + "_TEST");
-		this.trainSet = readData(this.dataDir + this.fileName + "_TRAIN");
-		
-		this.calcTimeAndPathLen = new StringBuilder();
-		this.accuracy = new StringBuilder();
-		this.distFn = DistanceFunctionFactory.getDistFnByName("EuclideanDistance");
 	}
 	
 	public void findBestWindow() {
@@ -86,9 +98,7 @@ public class BaseDTW {
                 bestDist = Double.MAX_VALUE;
                 warp.setWindowSize(testInst.size(), testInst.size(), currWindow);
 	            for(int trainInd=0; trainInd<trainSet.size(); trainInd++) {
-	                if(testInd == trainInd) {
-	                    continue;
-	                } else {
+	                if(testInd != trainInd) {
                         trainInst = trainSet.get(trainInd);
                         if(this instanceof NormalDTW) {
                             warpInfo = warp.getNormalDTW(testInst, trainInst, distFn);

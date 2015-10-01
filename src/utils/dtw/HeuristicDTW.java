@@ -22,11 +22,8 @@ public class HeuristicDTW extends BaseDTW {
 	private FileWriter fwRunTime;
 	private BufferedWriter bwRunTime;
 
-	public HeuristicDTW(String fName, String outDir, int window, String ranking, String restarts, String type, String distanceMeasure, int startIndx, int numToProcess) {
-		super(fName, outDir, window);
-		if(distanceMeasure.toLowerCase().equals("man")) {
-		    this.distFn = utils.distance.DistanceFunctionFactory.getDistFnByName("ManhattanDistance");
-		}
+	public HeuristicDTW(String fName, String outDir, int window, double distPower, String ranking, String restarts, String type, int startIndx, int numToProcess) {
+		super(fName, outDir, window, distPower);
         warp = new DynamicTimeWarping(testSet.get(0).size(), trainSet.get(0).size(), this.windowSize, ranking);
         warp.initRNGDistribution(type);
         if(this.windowSize == -1) {
@@ -54,9 +51,15 @@ public class HeuristicDTW extends BaseDTW {
 			} else if(this.hType.equals("S")) {
 				this.filePath += "_SkewedNormal";
 			}
-			if(distanceMeasure.toLowerCase().equals("man")) {
-			    this.filePath += "_Manhattan";
-			}
+            if(distPower == 0) {
+                this.filePath += "_Binary";
+            } else if(distPower == 1) {
+                this.filePath += "_Manhattan";
+            } else if(distPower == 2) {
+                this.filePath += "_Euclidean";
+            } else {
+                this.filePath += "_"+distPower;
+            }
 			//this.fwTimeAndLength = new FileWriter(this.filePath + "_Time_Length.csv");
 			this.fwAccuracy = new FileWriter(this.filePath + "_Accuracy.csv");
 			this.fwRunTime = new FileWriter(this.filePath + "_RunTime.csv");
@@ -89,13 +92,13 @@ public class HeuristicDTW extends BaseDTW {
 		    System.out.println("\nRun Num: " + runNum);
 			runStartTime = System.currentTimeMillis();
 			switch(numRestarts) {
-				case "I":
+				case "I":   // Increasing Restarts
 					maxRunsLimit = runNum;
 					break;
-				case "0":
+				case "0":   // 0 Restarts
 					maxRunsLimit = 1;
 					break;
-				default:
+				default:    // Constant Restarts per instance pair
 					maxRunsLimit = Math.abs(Integer.parseInt(numRestarts));
 			}
             for(int h=0; h<endIndex; h+=outerStep) {
@@ -116,10 +119,7 @@ public class HeuristicDTW extends BaseDTW {
                     for(int j=0; j<trainSet.size(); j++) {
                         train = trainSet.get(j);
                         instStartTime = System.currentTimeMillis();
-//                      for(int instRunNum = 0; instRunNum<1; instRunNum++) {       // 0 Restarts
-//                      for(int instRunNum = 0; instRunNum<maxRuns; instRunNum++) { // Constant Restarts [equal to runs]
-//                      for(int instRunNum = 0; instRunNum<runNum; instRunNum++) {  // Increasing Restarts
-                        for(int instRunNum = 0; instRunNum<maxRunsLimit; instRunNum++) {        // 0 Restarts
+                        for(int instRunNum = 0; instRunNum<maxRunsLimit; instRunNum++) {
                             warpInfo = warp.getHeuristicDTW(test, train, distFn);
                             if(warpInfo.getWarpDistance()<bestDist) {
                                 bestDist = warpInfo.getWarpDistance();

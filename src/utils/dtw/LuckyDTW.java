@@ -14,8 +14,8 @@ import utils.dtw.WarpInfo;
 public class LuckyDTW extends BaseDTW {
 	protected long startTime, endTime;
 	
-	public LuckyDTW(String fName, String outDir, int window, int startIndx, int numToProcess) {
-		super(fName, outDir, window);
+	public LuckyDTW(String fName, String outDir, int window, double distPower, int startIndx, int numToProcess) {
+		super(fName, outDir, window, distPower);
         warp = new DynamicTimeWarping(testSet.get(0).size(), trainSet.get(0).size(), this.windowSize);
         if(this.windowSize == -1) {
             this.findBestWindow();
@@ -31,6 +31,15 @@ public class LuckyDTW extends BaseDTW {
 		
 		try {
 			this.filePath = this.rsltDir + this.fileName + "_" + this.windowSize + "_Lucky";
+            if(distPower == 0) {
+                this.filePath += "_Binary";
+            } else if(distPower == 1) {
+                this.filePath += "_Manhattan";
+            } else if(distPower == 2) {
+                this.filePath += "_Euclidean";
+            } else {
+                this.filePath += "_"+distPower;
+            }
 			//this.fwTimeAndLength = new FileWriter(this.filePath + "_Time_Length.csv", this.appendResults);
 			this.fwAccuracy = new FileWriter(this.filePath + "_Accuracy.csv", this.appendResults);
 

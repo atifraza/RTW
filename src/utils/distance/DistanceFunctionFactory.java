@@ -4,6 +4,7 @@ public class DistanceFunctionFactory {
 	public static DistanceFunction EUCLIDEAN_DIST_FN = new EuclideanDistance();
 	public static DistanceFunction MANHATTAN_DIST_FN = new ManhattanDistance();
 	public static DistanceFunction BINARY_DIST_FN = new BinaryDistance();
+	public static DistanceFunction LpNorm_DIST_FN = new LpNormDistance();
 
 	public static DistanceFunction getDistFnByName(String distFnName) {
 		if (distFnName.equals("EuclideanDistance")) {
@@ -12,6 +13,8 @@ public class DistanceFunctionFactory {
 			return MANHATTAN_DIST_FN;
 		} else if (distFnName.equals("BinaryDistance")) {
 			return BINARY_DIST_FN;
+		} else if (distFnName.equals("LpNormDistance")) {
+		    return LpNorm_DIST_FN;
 		} else {
 			throw new IllegalArgumentException(
 					"There is no DistanceFunction for the name " + distFnName);
