@@ -18,6 +18,7 @@ public class InitDTWTest {
     protected static String bandSwitch          = "w", bandSwitchLong           = "window";
     protected static String twTypeSwitch        = "t", twTypeSwitchLong         = "type";
     protected static String rngSwitch           = "g", rngSwitchLong            = "rng";
+    protected static String rngSeedSwitch       = "s", rngSeedSwitchLong        = "seed";
     protected static String passesSwitch        = "p", passesSwitchLong         = "passes";
     protected static String rankingTypeSwitch   = "r", rankingTypeSwitchLong    = "ranking";
     protected static String distanceTypeSwitch  = "d", distanceTypeSwitchLong   = "distance";
@@ -29,6 +30,7 @@ public class InitDTWTest {
                 ranking = null, passes = null;
         int window = 0;
         int start = 0, inc = 0;
+        long rngSeed = -1;
         double distanceType = 2;
 
         try {
@@ -46,6 +48,7 @@ public class InitDTWTest {
 
             if (dtwType.equals("R")) {
                 rng = cmdLine.getOptionValue(rngSwitch, "G");
+                rngSeed = Long.parseLong(cmdLine.getOptionValue(rngSeedSwitch, "-1"));
                 ranking = cmdLine.getOptionValue(rankingTypeSwitch, "E");
                 passes = cmdLine.getOptionValue(passesSwitch, "0");
             }
@@ -100,9 +103,9 @@ public class InitDTWTest {
                 if (!outDir.equals("")) {
                     outDir += "/";
                 }
-                 dtw = new HeuristicDTW(fileName, outDir + "temp", window, distanceType, ranking, passes, rng, 0, 5);
+                 dtw = new HeuristicDTW(fileName, outDir + "temp", window, distanceType, ranking, passes, rng, rngSeed, 0, 5);
                  dtw.execute();
-                dtw = new HeuristicDTW(fileName, outDir + dirPath, window, distanceType, ranking, passes, rng, start, inc);
+                dtw = new HeuristicDTW(fileName, outDir + dirPath, window, distanceType, ranking, passes, rng, rngSeed, start, inc);
                 dtw.execute();
                 break;
         }
@@ -162,6 +165,12 @@ public class InitDTWTest {
         rngType.setArgs(1);
         rngType.setArgName("rngType");
 
+        Option rngSeed = new Option(rngSeedSwitch, "-1 (default) for automatic seeding of RNG,  or integer as seed" +
+                "(0 or greater)");
+        rngSeed.setLongOpt(rngSeedSwitchLong);
+        rngSeed.setArgs(1);
+        rngSeed.setArgName("rngSeed");
+        
         Option passes = new Option(passesSwitch, "number of restarts for RandomizedTW calculations 0 (default), " +
                                    "I (increasing with number of runs), integer (for constant number of restarts)");
         passes.setLongOpt(passesSwitchLong);
@@ -186,7 +195,8 @@ public class InitDTWTest {
 
         Options opts = new Options();
         opts.addOption(help).addOption(datafileName).addOption(outputDir).addOption(dtwType).addOption(rngType)
-            .addOption(winSz).addOption(passes).addOption(segment).addOption(ranking).addOption(distMeasure);
+            .addOption(winSz).addOption(passes).addOption(segment).addOption(ranking).addOption(distMeasure)
+            .addOption(rngSeed);
         return opts;
     }
 }

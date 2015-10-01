@@ -41,9 +41,13 @@ public class DynamicTimeWarping {
 		rng = null;
 	}
 	
-	public DynamicTimeWarping(int szI, int szJ, int windowPercent, String methodName) {
+	public DynamicTimeWarping(int szI, int szJ, int windowPercent, String methodName, long rngSeed) {
 		this(szI, szJ, windowPercent);
-		rng = new Well19937c();
+		if(rngSeed == -1) {
+	        rng = new Well19937c();
+		} else {
+		    rng = new Well19937c(rngSeed);
+		}
 		if(methodName.equals("L")) {
 			this.rankingMethod = 1;
 		} else if(methodName.equals("E")) {

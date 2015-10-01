@@ -22,9 +22,10 @@ public class HeuristicDTW extends BaseDTW {
 	private FileWriter fwRunTime;
 	private BufferedWriter bwRunTime;
 
-	public HeuristicDTW(String fName, String outDir, int window, double distPower, String ranking, String restarts, String type, int startIndx, int numToProcess) {
+	public HeuristicDTW(String fName, String outDir, int window, double distPower, String ranking, String restarts, 
+	                    String type, long rngSeed, int startIndx, int numToProcess) {
 		super(fName, outDir, window, distPower);
-        warp = new DynamicTimeWarping(testSet.get(0).size(), trainSet.get(0).size(), this.windowSize, ranking);
+        warp = new DynamicTimeWarping(testSet.get(0).size(), trainSet.get(0).size(), this.windowSize, ranking, rngSeed);
         warp.initRNGDistribution(type);
         if(this.windowSize == -1) {
             this.findBestWindow();
