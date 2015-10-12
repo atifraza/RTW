@@ -1,21 +1,21 @@
 close all; clear all; clc
 % Read all the files named below
 % fileNames = {'Beef'};
-fileNames = {'50words', 'Car', 'CBF', 'CinC_ECG_torso', 'Cricket_X', 'Cricket_Y', 'Cricket_Z', ...
-             'FaceAll', 'FaceFour', 'FacesUCR', 'FISH', 'Gun_Point', 'Haptics', 'InlineSkate', ...
-             'Lighting2', 'Lighting7', 'MedicalImages', 'OSULeaf', 'Plane', 'SwedishLeaf', ...
-             'Symbols', 'synthetic_control', 'Trace', 'Two_Patterns', ...
-             'wafer', 'WordsSynonyms', 'yoga'};
-
-% fileNames = {'50words', 'Adiac', 'Beef', 'Car', 'CBF', 'ChlorineConcentration', 'CinC_ECG_torso',...
-%              'Coffee', 'Cricket_X', 'Cricket_Y', 'Cricket_Z', 'DiatomSizeReduction', 'ECG200',   ...
-%              'ECGFiveDays', 'FaceAll', 'FaceFour', 'FacesUCR', 'FISH', 'Gun_Point', 'Haptics',   ...
-%              'InlineSkate', 'ItalyPowerDemand', 'Lighting2', 'Lighting7', 'MALLAT',              ...
-%              'MedicalImages', 'MoteStrain', 'OliveOil', 'OSULeaf', 'Plane', 'SonyAIBORobotSurface',...
-%              'SonyAIBORobotSurfaceII', 'SwedishLeaf', 'Symbols', 'synthetic_control', 'Trace',   ...
-%              'Two_Patterns', 'TwoLeadECG', ...'uWaveGestureLibrary_X', 'uWaveGestureLibrary_Y', 
-%              ...'uWaveGestureLibrary_Z', 
+% fileNames = {'50words', 'Car', 'CBF', 'CinC_ECG_torso', 'Cricket_X', 'Cricket_Y', 'Cricket_Z', ...
+%              'FaceAll', 'FaceFour', 'FacesUCR', 'FISH', 'Gun_Point', 'Haptics', 'InlineSkate', ...
+%              'Lighting2', 'Lighting7', 'MedicalImages', 'OSULeaf', 'Plane', 'SwedishLeaf', ...
+%              'Symbols', 'synthetic_control', 'Trace', 'Two_Patterns', ...
 %              'wafer', 'WordsSynonyms', 'yoga'};
+
+fileNames = {'50words', 'Adiac', 'Beef', 'Car', 'CBF', 'ChlorineConcentration', 'CinC_ECG_torso',...
+             'Coffee', 'Cricket_X', 'Cricket_Y', 'Cricket_Z', 'DiatomSizeReduction', 'ECG200',   ...
+             'ECGFiveDays', 'FaceAll', 'FaceFour', 'FacesUCR', 'FISH', 'Gun_Point', 'Haptics',   ...
+             'InlineSkate', 'ItalyPowerDemand', 'Lighting2', 'Lighting7', 'MALLAT',              ...
+             'MedicalImages', 'MoteStrain', 'OliveOil', 'OSULeaf', 'Plane', 'SonyAIBORobotSurface',...
+             'SonyAIBORobotSurfaceII', 'SwedishLeaf', 'Symbols', 'synthetic_control', 'Trace',   ...
+             'Two_Patterns', 'TwoLeadECG', ...'uWaveGestureLibrary_X', 'uWaveGestureLibrary_Y', 
+             ...'uWaveGestureLibrary_Z', 
+             'wafer', 'WordsSynonyms', 'yoga'};
 
 % Aesthetic settings
 fSz = 14;   fName = 'Times';    mrkrSz=7;   lnWd=2;
@@ -35,12 +35,12 @@ dist = [...
     struct('marker', '.',  'color', [228, 26, 28], 'long', 'Euclidean',  'short', 'ED'),... 'p'
     struct('marker', '.',  'color', [ 55,126,184], 'long', 'Normal',     'short', 'DTW'),... 'h'
     struct('marker', '.',  'color', [ 77,175, 74], 'long', 'Lucky',      'short', 'LTW'),... 's'
-    struct('marker', '.',  'color', [152, 78,163], 'long', 'Gaussian',   'short', 'RTW-GaussEuc'),... '*'
-    struct('marker', '.',  'color', [255,127,  0], 'long', 'Gaussian_Manhattan',    'short', 'RTW-GaussMan'),...'*.'
-%     struct('marker', '.',  'color', [255,255, 51], 'long', 'Uniform',    'short', 'RTW-Uniform'),... '+'
-%     struct('marker', '.',  'color', [166, 86, 40], 'long', 'Uniform_Manhattan',    'short', 'RTW-Uniform'),... '+.'
-%     struct('marker', '.',  'color', [247,129,191], 'long', 'SkewedNormal',    'short', 'RTW-Uniform'),... 'x'
-%     struct('marker', '.',  'color', [153,153,153], 'long', 'SkewedNormal_Manhattan',    'short', 'RTW-Uniform'),... 'x.'
+    struct('marker', '.',  'color', [152, 78,163], 'long', 'Gaussian',   'short', 'RTW-G EucDist'),... '*'
+    struct('marker', '.',  'color', [255,127,  0], 'long', 'Gaussian_Manhattan',    'short', 'RTW-G ManDist'),...'*.'
+%     struct('marker', '.',  'color', [255,255, 51], 'long', 'Uniform',    'short', 'RTW-U EucDist'),... '+'
+%     struct('marker', '.',  'color', [166, 86, 40], 'long', 'Uniform_Manhattan',    'short', 'RTW-U ManDist'),... '+.'
+%     struct('marker', '.',  'color', [247,129,191], 'long', 'SkewedNormal',    'short', 'RTW-SN EucDist'),... 'x'
+%     struct('marker', '.',  'color', [153,153,153], 'long', 'SkewedNormal_Manhattan',    'short', 'RTW-SN ManDist'),... 'x.'
     ];
 names = cell(1,length(dist));
 for typeInd =1:length(dist)
@@ -355,7 +355,6 @@ for restart = restarts
         % start plotting the accuracy and runtime
         for window = positiveWindowSize %windowSize
             windowName = strcat('W_', num2str(window));
-            x = (1:10)';
             acc_Combined = zeros(numRuns, length(dist));
             rt_Combined = zeros(numRuns, length(dist));
             for typeInd = 1:numDetDist
@@ -375,42 +374,24 @@ for restart = restarts
 
             currFigHandle=figure('Units','inches', 'Position',[0 0 8 8]);
             set(gcf,'Visible', 'off');
-            axis tight
-            [ax, h1, h2] = plotyy(x, (rt_Combined),...%/allresults.(fileNameVar).Lucky.(windowName).totalTime),...
-                                  x, acc_Combined,...
-                                  'bar', 'line');
-            temp = get(ax(1), 'YLim');
-            set(ax(1), 'XLim', [0 11],...      % adjust the runtime x scale
-                       'XTick', 1:10,...
-                       'YLim', [temp(1) 2*temp(2)-temp(1)],...
-                       'YTick', temp(1): (temp(2)-temp(1))/5 :2*temp(2)-temp(1));
-            set(ax(2), 'XLim', [0 11],...      % adjust the accuracy x scale
-                       'XTick', 1:10,...
-                       'YLim', [2*accMinLim-accMaxLim accMaxLim],...
-                       'YTick', 2*accMinLim-accMaxLim:(accMaxLim-accMinLim)/5:accMaxLim);
-            set(ax(2), 'XGrid', 'on', 'YGrid', 'on')
-
-            cmap = colormap(ax(1), color_mat/255);   % assign colormap to bar graph
-            for typeInd = 1:numDetDist
-                set(h2(typeInd), 'Marker', char(dist(typeInd).marker), ...
-                                 'MarkerSize', mrkrSz, ...
-                                 'LineStyle', '--', ...
-                                 'LineWidth', lnWd, ...
-                                 'Color', color_mat(typeInd,:)/255);
+            rtHandle = subplot(2,1,1);
+            hold on
+            for methodNum = 1:size(rt_Combined,2)
+                bar(methodNum, mean(rt_Combined(:,methodNum), 1), 0.5, 'FaceColor', color_mat(methodNum,:)/255);
             end
-            for typeInd = numDetDist+1:length(dist)
-                set(h2(typeInd), 'Marker', char(dist(typeInd).marker), ...
-                                 'MarkerSize', mrkrSz, ...
-                                 'LineStyle', '--', ...
-                                 'LineWidth', lnWd, ...
-                                 'Color', color_mat(typeInd,:)/255);
-            end
-
-            title({strcat(char(fileNames(ind)), ' - Window size: ', num2str(window), '%');''}, 'Interpreter', 'none', 'FontSize', fSz+2)
-%             ylabel(ax(1), 'Run Time (Multiples of LTW Run Time)', 'FontSize', fSz, 'FontName', fName)
-            ylabel(ax(1), 'Run Time (seconds)', 'FontSize', fSz, 'FontName', fName)
-            ylabel(ax(2), 'Accuracy (percentage)', 'FontSize', fSz, 'FontName', fName)
-            hLegend = legend(ax(2), names, 'Location', 'NorthOutside', 'Orientation', 'horizontal', 'Color', 'none');
+            errorbar(mean(rt_Combined, 1), std(rt_Combined, 1), 'kx');
+            set(rtHandle, 'XTick', 1:length(names), 'XTickLabel', names)
+            accHandle = subplot(2,1,2);
+            bpHandle = boxplot(acc_Combined, 'colors', color_mat/255, 'symbol', '+', 'labels', names);
+%             for i = 1:size(bpHandle,2)
+%                 set(bpHandle(:,i), 'LineWidth', lnWd);
+%             end
+            ylim([0 100])
+            grid minor
+            title(rtHandle, {char(strcat(char(fileNames(ind)), {' - Window size: '}, num2str(window), '%'));'Runtime'}, 'Interpreter', 'none', 'FontSize', fSz+2)
+            ylabel(rtHandle, 'seconds', 'FontSize', fSz, 'FontName', fName)
+            title(accHandle, 'Accuracy', 'Interpreter', 'none', 'FontSize', fSz+2)
+            ylabel(accHandle, 'percentage', 'FontSize', fSz, 'FontName', fName)
             print(gcf, format, res, char(strcat(dir.Out, fileNames(ind), '/',windowName, '_Restarts', runType, ext)));
             close gcf
         end
