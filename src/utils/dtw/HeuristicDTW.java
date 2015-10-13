@@ -6,6 +6,13 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import utils.timeseries.TimeSeries;
 import utils.dtw.DynamicTimeWarping;
@@ -22,14 +29,11 @@ public class HeuristicDTW extends BaseDTW {
 	private FileWriter fwRunTime;
 	private BufferedWriter bwRunTime;
 
-	public HeuristicDTW(String fName, String outDir, int window, double distPower, String ranking, String restarts, 
+	public HeuristicDTW(String fName, String outDir, double distPower, int window, String ranking, String restarts, 
 	                    String type, long rngSeed, int startIndx, int numToProcess) {
-		super(fName, outDir, window, distPower);
+		super(fName, outDir, distPower, window);
         warp = new DynamicTimeWarping(testSet.get(0).size(), trainSet.get(0).size(), this.windowSize, ranking, rngSeed);
         warp.initRNGDistribution(type);
-        if(this.windowSize == -1) {
-            this.findBestWindow();
-        }
 		
 		this.startIndex = startIndx;
 		if(numToProcess != 0) {
@@ -77,10 +81,15 @@ public class HeuristicDTW extends BaseDTW {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+        
+        if(this.windowSize == -1) {
+            this.findBestWindow();
+        }
 	}
 
 	public void execute() {
 		WarpInfo warpInfo = new WarpInfo();
+		WarpInfo bestWarping = new WarpInfo();
 		
 		long instStartTime, instEndTime, instProcessingTime, runStartTime, runEndTime;
 		TimeSeries test = null, train = null;
@@ -114,6 +123,7 @@ public class HeuristicDTW extends BaseDTW {
                 }
                 for(int i=0; i<outerStep && (i+h)<endIndex; i++) {
                     test = testSet.get(i+h);
+                    testInstDistancesMap = new HashMap<Integer, DescriptiveStatistics>();
                     bestDist = Double.POSITIVE_INFINITY;
                     classPredicted = 0;
                     bestPathLength = 0;
@@ -126,13 +136,29 @@ public class HeuristicDTW extends BaseDTW {
                                 bestDist = warpInfo.getWarpDistance();
                                 classPredicted = train.getTSClass();
                                 bestPathLength = warpInfo.getWarpPathLength();
+                                bestWarping = warpInfo;
                             }                       
                         }
                         instEndTime = System.currentTimeMillis();
                         instProcessingTime = instEndTime - instStartTime;
                         this.calcTimeAndPathLen.append(runNum+","+windowSize+","+i+","+j+","+instProcessingTime+","+bestPathLength+"\n");
+                        if(testInstDistancesMap.containsKey(train.getTSClass())) {
+                            testInstDistancesMap.get(train.getTSClass()).addValue(bestWarping.getWarpDistance());
+                        } else {
+                            testInstDistancesMap.put(train.getTSClass(), new DescriptiveStatistics());
+                            testInstDistancesMap.get(train.getTSClass()).addValue(bestWarping.getWarpDistance());
+                        }
                     }
-                    this.accuracy.append(runNum+","+windowSize+","+(i+h)+","+test.getTSClass()+","+classPredicted+"\n");
+                    DescriptiveStatistics temp;
+                    Set<Entry<Integer, DescriptiveStatistics>> set = testInstDistancesMap.entrySet();
+                    Iterator<Entry<Integer, DescriptiveStatistics>> iterator = set.iterator();
+                    String minDistPerClass = "";
+                    while(iterator.hasNext()) {
+                    	Map.Entry<Integer, DescriptiveStatistics> mapEntry = (Map.Entry<Integer, DescriptiveStatistics>)iterator.next();
+                    	temp = (DescriptiveStatistics)mapEntry.getValue();
+                    	minDistPerClass += "," + temp.getMin();
+                    }
+                    this.accuracy.append(runNum+","+windowSize+","+(i+h)+","+test.getTSClass()+","+classPredicted+minDistPerClass+"\n");
                 }
             }
             System.out.print("100%");

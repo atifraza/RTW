@@ -6,6 +6,13 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import utils.timeseries.TimeSeries;
 
@@ -13,7 +20,7 @@ public class EuclideanDistance extends BaseDTW {
 	protected long startTime, endTime;
 	
 	public EuclideanDistance(String fName, String outDir, int startIndx, int numToProcess) {
-		super(fName, outDir);
+		super(fName, outDir, 2);
 		
 		this.startIndex = startIndx;
 		if(numToProcess != 0) {
@@ -43,6 +50,7 @@ public class EuclideanDistance extends BaseDTW {
 	
 	public void execute() {
 		WarpInfo warpInfo = new WarpInfo();
+		WarpInfo bestWarping = new WarpInfo();
 		
 		long instStartTime, instEndTime, instProcessingTime;
 		TimeSeries test = null, train = null;
@@ -62,21 +70,38 @@ public class EuclideanDistance extends BaseDTW {
             }
             for(int i=0; i<outerStep && (i+h)<endIndex; i++) {
                 test = testSet.get(i+h);
+                testInstDistancesMap = new HashMap<Integer, DescriptiveStatistics>();
     			bestDist = Double.POSITIVE_INFINITY;
     			classPredicted = 0;
     			for(int j=0; j<trainSet.size(); j++) {
     				train = trainSet.get(j);
     				instStartTime = System.currentTimeMillis();
-    				warpInfo = warp.getEuclideanDist(test, train);
+    				warpInfo = warp.getEuclideanDist(test, train, distFn);
     				if(warpInfo.getWarpDistance()<bestDist) {
     					bestDist = warpInfo.getWarpDistance();
     					classPredicted = train.getTSClass();
+    					bestWarping = warpInfo;
     				}
     				instEndTime = System.currentTimeMillis();
     				instProcessingTime = instEndTime - instStartTime;
     				this.calcTimeAndPathLen.append(windowSize+","+i+","+j+","+instProcessingTime+","+warpInfo.getWarpPathLength()+"\n");
+                    if(testInstDistancesMap.containsKey(train.getTSClass())) {
+                        testInstDistancesMap.get(train.getTSClass()).addValue(bestWarping.getWarpDistance());
+                    } else {
+                        testInstDistancesMap.put(train.getTSClass(), new DescriptiveStatistics());
+                        testInstDistancesMap.get(train.getTSClass()).addValue(bestWarping.getWarpDistance());
+                    }
     			}
-    			this.accuracy.append(windowSize+","+(i+h)+","+test.getTSClass()+","+classPredicted+"\n");
+                DescriptiveStatistics temp;
+                Set<Entry<Integer, DescriptiveStatistics>> set = testInstDistancesMap.entrySet();
+                Iterator<Entry<Integer, DescriptiveStatistics>> iterator = set.iterator();
+                String minDistPerClass = "";
+                while(iterator.hasNext()) {
+                    Map.Entry<Integer, DescriptiveStatistics> mapEntry = (Map.Entry<Integer, DescriptiveStatistics>)iterator.next();
+                    temp = (DescriptiveStatistics)mapEntry.getValue();
+                    minDistPerClass += "," + temp.getMin();
+                }
+    			this.accuracy.append(windowSize+","+(i+h)+","+test.getTSClass()+","+classPredicted+minDistPerClass+"\n");
     		}
         }
         System.out.print("100%");

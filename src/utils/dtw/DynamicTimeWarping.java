@@ -30,6 +30,7 @@ public class DynamicTimeWarping {
 	private double MEAN = 1.0,
 				   STD_DEV = 1.0/3.0;
 	private double SKEW = 0;
+	private boolean saveWarpPath = true;
 	
 	public DynamicTimeWarping() {
 		
@@ -136,7 +137,9 @@ public class DynamicTimeWarping {
 // ################################################################################################
 //		The following code statement is adding the entries to the warping path. To record the
 //		warping path as well, uncomment the statements "info.addLast(i, j);"
-//		info.addLast(i, j);
+		if (saveWarpPath) {
+		    info.addLast(i, j);
+		}
 // ################################################################################################
 		while(i<maxI && j<maxJ) {
 			if(i+1<maxI && j+1<maxJ) {		// Check if move to diagonal element is valid
@@ -179,7 +182,9 @@ public class DynamicTimeWarping {
 				if(isValidCellChosen) {
 // ################################################################################################
 //					The following code statement is adding the entries to the warping path.
-//					info.addLast(i, j);
+				    if (saveWarpPath) {
+				        info.addLast(i, j);
+				    }
 // ################################################################################################					
 					Arrays.fill(probs, 0);				// reinitialize the probs array to all zeros
 					if(this.distributionType == 3) {
@@ -213,7 +218,9 @@ public class DynamicTimeWarping {
 //		The following code statement is adding the entries to the warping path as per LuckyTW. To
 //		record the warping path as well, uncomment the statements "info.addLast(i, j);"
 //		One other statement is in the body of the while loop 
-//		info.addLast(i, j);
+		if (saveWarpPath) {
+		    info.addLast(i, j);
+		}
 // ################################################################################################
 		while(i<maxI && j<maxJ) {
 			if(i+1<maxI && j+1<maxJ) {
@@ -252,7 +259,9 @@ public class DynamicTimeWarping {
 			}
 // ################################################################################################
 //			The following code statement is adding the entries to the warping path as per LuckyTW.
-//			info.addLast(i, j);
+			if (saveWarpPath) {
+			    info.addLast(i, j);
+			}
 // ################################################################################################
 			if(i+1==maxI && j+1==maxJ) {
 				info.setWarpDistance(costMatrix[i][j]);
@@ -313,53 +322,59 @@ public class DynamicTimeWarping {
 //		The following code segment determines the warping path. The warping distance has been
 //		calculated up to the previous point in the code. Since this code segment is not needed yet,
 //		it has been commented.
-//		double costDiag, costLeft, costDown;
-//		info.addFirst(i, j);
-//		while( (i>0) || (j>0) ) {
-//			if ((i > 0) && (j > 0))
-//				costDiag = costMatrix[i - 1][j - 1];
-//			else
-//				costDiag = Double.POSITIVE_INFINITY;
-//
-//			if (j > 0)
-//				costLeft = costMatrix[i][j - 1];
-//			else
-//				costLeft = Double.POSITIVE_INFINITY;
-//
-//			if (i > 0)
-//				costDown = costMatrix[i - 1][j];
-//			else
-//				costDown = Double.POSITIVE_INFINITY;
-//
-//			// Prefer moving diagonally and moving towards the i==j axis  
-//			// of the matrix if there are ties.
-//			if ((costDiag <= costLeft) && (costDiag <= costDown)) {
-//				i--;
-//				j--;
-//			} else if ((costLeft < costDiag) && (costLeft < costDown)) {
-//				j--;
-//			} else if ((costDown < costDiag) && (costDown < costLeft)) {
-//				i--;
-//			} else if (i <= j) { // leftCost==rightCost > diagCost
-//				i--;
-//			} else { // leftCost==rightCost > diagCost
-//				j--;
-//			}
-//			info.addFirst(i, j);
-//		}
+		if (saveWarpPath) {
+		    double costDiag, costLeft, costDown;
+    		info.addFirst(i, j);
+    		while( (i>0) || (j>0) ) {
+    			if ((i > 0) && (j > 0))
+    				costDiag = costMatrix[i - 1][j - 1];
+    			else
+    				costDiag = Double.POSITIVE_INFINITY;
+    
+    			if (j > 0)
+    				costLeft = costMatrix[i][j - 1];
+    			else
+    				costLeft = Double.POSITIVE_INFINITY;
+    
+    			if (i > 0)
+    				costDown = costMatrix[i - 1][j];
+    			else
+    				costDown = Double.POSITIVE_INFINITY;
+    
+    			// Prefer moving diagonally and moving towards the i==j axis  
+    			// of the matrix if there are ties.
+    			if ((costDiag <= costLeft) && (costDiag <= costDown)) {
+    				i--;
+    				j--;
+    			} else if ((costLeft < costDiag) && (costLeft < costDown)) {
+    				j--;
+    			} else if ((costDown < costDiag) && (costDown < costLeft)) {
+    				i--;
+    			} else if (i <= j) { // leftCost==rightCost > diagCost
+    				i--;
+    			} else { // leftCost==rightCost > diagCost
+    				j--;
+    			}
+    			info.addFirst(i, j);
+    		}
+		}
 // ################################################################################################
 		return info;
 	}
 
-	public WarpInfo getEuclideanDist(TimeSeries tsI, TimeSeries tsJ) {
+	public WarpInfo getEuclideanDist(TimeSeries tsI, TimeSeries tsJ, DistanceFunction distFn) {
 		int maxLen = tsI.size();
 		double dist = 0.0;
 		for(int i=0; i<maxLen; i++) {
-			dist += Math.pow(tsI.get(i)-tsJ.get(i), 2);
+			dist += distFn.calcDistance(tsI.get(i), tsJ.get(i));
 		}
-		dist = Math.sqrt(dist);
 		WarpInfo info = new WarpInfo();
 		info.setWarpDistance(dist);
+		if (saveWarpPath) {
+		    for(int i=0; i<maxLen; i++) {
+		        info.addLast(i, i);
+		    }
+		}
 		return info;
 	}
 

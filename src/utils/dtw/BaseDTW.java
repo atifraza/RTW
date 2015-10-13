@@ -6,6 +6,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
+
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import utils.timeseries.TimeSeries;
 import utils.distance.*;
@@ -43,7 +46,9 @@ public class BaseDTW {
 	
 	protected int startIndex, endIndex;
 	
-    public BaseDTW(String fName, String outDir) {
+    protected HashMap<Integer, DescriptiveStatistics> testInstDistancesMap;
+	
+    public BaseDTW(String fName, String outDir, double distPower) {
         this.fileName = fName;
         this.totalTime = 0;
         this.appendResults = false;
@@ -61,21 +66,21 @@ public class BaseDTW {
         
         this.calcTimeAndPathLen = new StringBuilder();
         this.accuracy = new StringBuilder();
-    }
-    
-	public BaseDTW(String fName, String outDir, int window, double distPower) {
-		this(fName, outDir);
-		this.windowSize = window;
-		if(distPower == 0){
+        if(distPower == 0){
             this.distFn = DistanceFunctionFactory.getDistFnByName("BinaryDistance");
         } else if(distPower == 1) {
-		    this.distFn = DistanceFunctionFactory.getDistFnByName("ManhattanDistance");
-		} else if(distPower == 2) {
+            this.distFn = DistanceFunctionFactory.getDistFnByName("ManhattanDistance");
+        } else if(distPower == 2) {
             this.distFn = DistanceFunctionFactory.getDistFnByName("EuclideanDistance");
         } else {
-		    this.distFn = DistanceFunctionFactory.getDistFnByName("LpNormDistance");
-		    ((LpNormDistance)this.distFn).setPower(distPower);
-		}
+            this.distFn = DistanceFunctionFactory.getDistFnByName("LpNormDistance");
+            ((LpNormDistance)this.distFn).setPower(distPower);
+        }
+    }
+    
+	public BaseDTW(String fName, String outDir, double distPower, int window) {
+		this(fName, outDir, distPower);
+		this.windowSize = window;
 	}
 	
 	public void findBestWindow() {
@@ -88,10 +93,10 @@ public class BaseDTW {
 	    int classPredicted=0;
 	    TimeSeries testInst, trainInst;
 	    WarpInfo warpInfo = new WarpInfo();
+	    System.out.println("Running Cross Validation ...");
 	    
 	    for(int currWindow = 0; currWindow<=100; currWindow++) {
 	        correctClassified = 0;
-	        System.err.print(currWindow + " ");
 	        for(int testInd=0; testInd<trainSet.size(); testInd++) {
 	            dist = Double.MAX_VALUE;
                 testInst = trainSet.get(testInd);
@@ -135,9 +140,8 @@ public class BaseDTW {
 	        }
 	    }
 	    this.windowSize = bestWindow;
-	    System.out.println();
-	    System.out.println("Best window: " + bestWindow + ", Least error: " + leastError);
-        System.out.println();
+	    System.out.println("Best window:      " + bestWindow);
+        System.out.println("Least error:      " + leastError);
 	}
 	
 	public void execute() {

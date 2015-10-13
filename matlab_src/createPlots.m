@@ -128,36 +128,30 @@ for restart = restarts
                         obtainedClassification = sortrows(obtainedClassification, [1 3]);
                         allresults.(fileNameVar).(char(dist(typeInd).long)).(windowName).('classification') = obtainedClassification(:,[1,2,5]);
     %%%%%%%%%%%%%%%%%%% Inter Class Difference Plotting
-    %                     if(plotMinClassDiffs)
-    %                         isClassCorrect = obtainedClassification(:,4)==obtainedClassification(:,5);
-    %                         obtainedClassification = [obtainedClassification, isClassCorrect];
-    %                         uniqueClasses = unique(obtainedClassification(:,4));
-    %                         counts = zeros(length(uniqueClasses));
-    %                         for cls_Ind = 1:length(uniqueClasses)
-    %                             currClass = uniqueClasses(cls_Ind);
-    %                             currClassData = obtainedClassification(obtainedClassification(:,4)==currClass,:);
-    %                             for col = 1:length(uniqueClasses)
-    %                                 counts(cls_Ind,col) = sum(currClassData(:,5)==uniqueClasses(col));
-    %     %                             if(ind==col)
-    %     %                                 counts(ind,col) = sum(currClassData(:,5)==currClass);
-    %     %                             else
-    %     %                                 counts(ind,col) = sum(currClassData(:,5)~=currClass);
-    %     %                             end
-    %                             end
-    %     %                         counts(ind,:) = [sum(currClassData(:,5)==currClass), sum(currClassData(:,5)~=currClass)];
-    %                         end
-    %                         [~,centers] = hist(obtainedClassification(:, 6:size(obtainedClassification,2)-1),length(uniqueClasses));
-    %                         bar(centers,counts, 0.5,'stacked')
-    %                         ax = gca;
-    %                         xlabel('Class Distance Delta Centers')
-    %                         ylabel('Number of Instances Classified')
-    %                         temp = get(ax, 'YLim')
-    %                         ylim([temp(1) temp(2)*1.2])
-    %                         legend(num2str(uniqueClasses),'Location', 'eastoutside')
-    %                         print(gcf, format, res, char(strcat(dir.Out, '/', char(fileName), ' - InterClassDistances', ext)));
-    %                         close gcf
-    %                     end
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                         if(plotMinClassDiffs)
+%                             isClassCorrect = obtainedClassification(:,4)==obtainedClassification(:,5);
+%                             obtainedClassification = [obtainedClassification, isClassCorrect];
+%                             uniqueClasses = unique(obtainedClassification(:,4));
+%                             counts = zeros(length(uniqueClasses));
+%                             for cls_Ind = 1:length(uniqueClasses)
+%                                 currClass = uniqueClasses(cls_Ind);
+%                                 currClassData = obtainedClassification(obtainedClassification(:,4)==currClass,:);
+%                                 for col = 1:length(uniqueClasses)
+%                                     counts(cls_Ind,col) = sum(currClassData(:,5)==uniqueClasses(col));
+%                                 end
+%                             end
+%                             [~,centers] = hist(obtainedClassification(:, 6:size(obtainedClassification,2)-1),length(uniqueClasses));
+%                             bar(centers,counts, 0.5,'stacked')
+%                             ax = gca;
+%                             xlabel('Class Distance Delta Centers')
+%                             ylabel('Number of Instances Classified')
+%                             temp = get(ax, 'YLim')
+%                             ylim([temp(1) temp(2)*1.2])
+%                             legend(num2str(uniqueClasses),'Location', 'eastoutside')
+%                             print(gcf, format, res, char(strcat(dir.Out, '/', char(fileName), ' - InterClassDistances', ext)));
+%                             close gcf
+%                         end
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                         totalTime = totalTime/10;
                         fileRunTime = strcat(dirString,char(fileName),'_',num2str(window),'_',dist(typeInd).long,filePostfix(3));
                         if(dataRow == 0)
@@ -380,14 +374,14 @@ for restart = restarts
                 bar(methodNum, mean(rt_Combined(:,methodNum), 1), 0.5, 'FaceColor', color_mat(methodNum,:)/255);
             end
             errorbar(mean(rt_Combined, 1), std(rt_Combined, 1), 'kx');
-            set(rtHandle, 'XTick', 1:length(names), 'XTickLabel', names)
+            set(rtHandle, 'XTick', 1:length(names), 'XTickLabel', names, 'YGrid', 'on')
             accHandle = subplot(2,1,2);
             bpHandle = boxplot(acc_Combined, 'colors', color_mat/255, 'symbol', '+', 'labels', names);
 %             for i = 1:size(bpHandle,2)
 %                 set(bpHandle(:,i), 'LineWidth', lnWd);
 %             end
-            ylim([0 100])
-            grid minor
+%             ylim([0 100])
+            set(accHandle, 'YGrid', 'on')
             title(rtHandle, {char(strcat(char(fileNames(ind)), {' - Window size: '}, num2str(window), '%'));'Runtime'}, 'Interpreter', 'none', 'FontSize', fSz+2)
             ylabel(rtHandle, 'seconds', 'FontSize', fSz, 'FontName', fName)
             title(accHandle, 'Accuracy', 'Interpreter', 'none', 'FontSize', fSz+2)

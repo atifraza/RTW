@@ -66,18 +66,20 @@ public class InitDTWTest {
         }
 
         BaseDTW dtw;
-        System.out.println("Dataset:\t\t" + fileName);
-        System.out.println("Type:\t\t\t" + dtwType);
-        System.out.println("Window:\t\t\t" + window);
-        System.out.println("Lp norm power:\t" + distanceType);
+        System.out.println("Dataset:          " + fileName);
+        System.out.println("Type:             " + dtwType);
+        if (!dtwType.equals("E")) {
+            System.out.println("Window:           " + window);
+            System.out.println("Lp norm power:    " + distanceType);
+        }
         if (dtwType.equals("R")) {
-            System.out.println("Ranking:\t\t" + ranking);
-            System.out.println("Passes:\t\t\t" + passes);
-            System.out.println("RNG:\t\t\t" + rng);
+            System.out.println("Ranking:          " + ranking);
+            System.out.println("Passes:           " + passes);
+            System.out.println("RNG:              " + rng);
         }
         if (inc != 0) {
-            System.out.println("Start:\t\t\t" + start);
-            System.out.println("End:\t\t\t" + inc);
+            System.out.println("Start:            " + start);
+            System.out.println("End:              " + inc);
         }
         switch (dtwType) {
             case "E":
@@ -85,11 +87,11 @@ public class InitDTWTest {
                 dtw.execute();
                 break;
             case "N":
-                dtw = new NormalDTW(fileName, outDir, window, distanceType, start, inc);
+                dtw = new NormalDTW(fileName, outDir, distanceType, window, start, inc);
                 dtw.execute();
                 break;
             case "L":
-                dtw = new LuckyDTW(fileName, outDir, window, distanceType, start, inc);
+                dtw = new LuckyDTW(fileName, outDir, distanceType, window, start, inc);
                 dtw.execute();
                 break;
             case "R":
@@ -103,9 +105,9 @@ public class InitDTWTest {
                 if (!outDir.equals("")) {
                     outDir += "/";
                 }
-                 dtw = new HeuristicDTW(fileName, outDir + "temp", window, distanceType, ranking, passes, rng, rngSeed, 0, 5);
-                 dtw.execute();
-                dtw = new HeuristicDTW(fileName, outDir + dirPath, window, distanceType, ranking, passes, rng, rngSeed, start, inc);
+                dtw = new HeuristicDTW(fileName, "temp", distanceType, window, ranking, passes, rng, rngSeed, 0, 5);
+                dtw.execute();
+                dtw = new HeuristicDTW(fileName, outDir + dirPath, distanceType, window, ranking, passes, rng, rngSeed, start, inc);
                 dtw.execute();
                 break;
         }

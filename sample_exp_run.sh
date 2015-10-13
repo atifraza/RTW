@@ -6,24 +6,24 @@ declare -a warpingTypes=("L" "N" "R")
 declare -a generators=("G") #"U" "S"
 declare -a ranking=("E") # "L"
 oDir="win-size_0-100"
-
+jarName="warping.jar"
 for dSet in "${datasetNames[@]}"; do
     # Run experiment for Euclidean distance
-	taskset -c $cpu java -jar warping.jar --file $dSet --type E --out-dir $oDir/$dSet
+	taskset -c $cpu java -jar $jarName --file $dSet --type E --out-dir $oDir/$dSet
 	wait $!
 	for w in "${windowSizes[@]}"; do
 		for wTyp in "${warpingTypes[@]}"; do
 			if [ "$wTyp" == "R" ]; then # Run experiment for RTW passes 0, ranking E, rng G
 				for rng in "${generators[@]}"; do
 				    for rank in "${ranking[@]}"; do
-					    taskset -c $cpu java -jar randwarp.jar --file $dSet --out-dir $oDir/$dSet --window $w --type $wTyp --rng $rng --ranking $rank --distance 2
+					    taskset -c $cpu java -jar $jarName --file $dSet --out-dir $oDir/$dSet --window $w --type $wTyp --rng $rng --ranking $rank --distance 2
 					    wait $!
-					    taskset -c $cpu java -jar randwarp.jar --file $dSet --out-dir $oDir/$dSet --window $w --type $wTyp --rng $rng --ranking $rank --distance 1
+					    taskset -c $cpu java -jar $jarName --file $dSet --out-dir $oDir/$dSet --window $w --type $wTyp --rng $rng --ranking $rank --distance 1
 					    wait $!
 				    done
 				done
 			else # Run experiment for LuckyTW and DTW
-				taskset -c $cpu java -jar randwarp.jar --file $dSet --out-dir $oDir/$dSet --window $w --type $wTyp #--distance 2
+				taskset -c $cpu java -jar $jarName --file $dSet --out-dir $oDir/$dSet --window $w --type $wTyp #--distance 2
 				wait $!
 			fi
 		done
