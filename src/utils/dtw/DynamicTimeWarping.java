@@ -1,8 +1,8 @@
 package utils.dtw;
 
+import java.io.FileInputStream;
 import java.util.Arrays;
-
-
+import java.util.Properties;
 
 //import java.util.Locale;
 //import java.text.DecimalFormat;
@@ -31,12 +31,23 @@ public class DynamicTimeWarping {
 				   STD_DEV = 1.0/3.0;
 	private double SKEW = 0;
 	private boolean saveWarpPath = true;
+	private boolean isPureRandom;
 	
 	public DynamicTimeWarping() {
-		
+	    Properties props = new Properties();
+	    try {
+		    props.load(new FileInputStream("warping.properties"));
+		    if (props.containsKey("std_dev")) {
+		        STD_DEV = Double.parseDouble(props.getProperty("std_dev"));
+		    }
+		    isPureRandom = Boolean.valueOf(props.getProperty("is_pure_random", "false"));
+		} catch (Exception e) {
+		    e.printStackTrace();
+		}
 	}
 	
 	public DynamicTimeWarping(int szI, int szJ, int windowPercent) {
+	    this();
 		costMatrix = new double[szI][szJ];
 		setWindowSize(szI, szJ, windowPercent);
 		rng = null;
@@ -95,6 +106,11 @@ public class DynamicTimeWarping {
 		double epsilon = 1e-9, epsilon3x = 3e-9;
 		double alpha = 2;
 		double costSum;
+		if (this.isPureRandom) {
+		    cRight = 1.0;
+		    cDiag = 1.0;
+		    cDown = 1.0;
+		}
 		if(this.rankingMethod==1) {
 			costSum = cDiag+cRight+cDown;
 			probs[0] = (costSum-cRight+epsilon) / (costSum + epsilon3x);

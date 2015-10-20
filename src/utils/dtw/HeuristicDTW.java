@@ -3,6 +3,7 @@ package utils.dtw;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -10,6 +11,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
@@ -30,7 +32,7 @@ public class HeuristicDTW extends BaseDTW {
 	private BufferedWriter bwRunTime;
 
 	public HeuristicDTW(String fName, String outDir, double distPower, int window, String ranking, String restarts, 
-	                    String type, long rngSeed, int startIndx, int numToProcess) {
+	                    String type, long rngSeed, String fnPostfix, int startIndx, int numToProcess) {
 		super(fName, outDir, distPower, window);
         warp = new DynamicTimeWarping(testSet.get(0).size(), trainSet.get(0).size(), this.windowSize, ranking, rngSeed);
         warp.initRNGDistribution(type);
@@ -44,7 +46,13 @@ public class HeuristicDTW extends BaseDTW {
 		}
 		this.numRestarts = restarts;
 		this.hType = type;
-		this.maxRuns = 10;
+		Properties props = new Properties();
+		try {
+		    props.load(new FileInputStream("warping.properties"));
+		    this.maxRuns = Integer.parseInt(props.getProperty("num_of_experiments", "10"));
+		} catch (Exception e) {
+		    e.printStackTrace();
+		}
 		this.runTimes = new double[this.maxRuns];
 
 		try {
@@ -65,6 +73,9 @@ public class HeuristicDTW extends BaseDTW {
             } else {
                 this.filePath += "_"+distPower;
             }
+			if(!fnPostfix.equals("")) {
+				this.filePath += "_" + fnPostfix;
+			}
 			//this.fwTimeAndLength = new FileWriter(this.filePath + "_Time_Length.csv");
 			this.fwAccuracy = new FileWriter(this.filePath + "_Accuracy.csv");
 			this.fwRunTime = new FileWriter(this.filePath + "_RunTime.csv");

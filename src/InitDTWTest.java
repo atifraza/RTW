@@ -23,11 +23,12 @@ public class InitDTWTest {
     protected static String rankingTypeSwitch   = "r", rankingTypeSwitchLong    = "ranking";
     protected static String distanceTypeSwitch  = "d", distanceTypeSwitchLong   = "distance";
     protected static String segmentSwitch       = "segment";
+	protected static String postfixSwitch		= "postfix";
 
     public static void main(String[] args) {
         Options options = constructCLIOptions();
         String fileName = null, outDir = null, dtwType = null, rng = null, 
-                ranking = null, passes = null;
+                ranking = null, passes = null, fnPostfix = null;
         int window = 0;
         int start = 0, inc = 0;
         long rngSeed = -1;
@@ -45,6 +46,7 @@ public class InitDTWTest {
             window = Integer.parseInt(cmdLine.getOptionValue(bandSwitch, "100"));
             dtwType = cmdLine.getOptionValue(twTypeSwitch, "R");
             distanceType = Double.parseDouble(cmdLine.getOptionValue(distanceTypeSwitch, "2"));
+			fnPostfix = cmdLine.getOptionValue(postfixSwitch, "");
 
             if (dtwType.equals("R")) {
                 rng = cmdLine.getOptionValue(rngSwitch, "G");
@@ -105,9 +107,9 @@ public class InitDTWTest {
                 if (!outDir.equals("")) {
                     outDir += "/";
                 }
-                dtw = new HeuristicDTW(fileName, "temp", distanceType, window, ranking, passes, rng, rngSeed, 0, 5);
+                dtw = new HeuristicDTW(fileName, "temp", distanceType, window, ranking, passes, rng, rngSeed, fnPostfix, 0, 5);
                 dtw.execute();
-                dtw = new HeuristicDTW(fileName, outDir + dirPath, distanceType, window, ranking, passes, rng, rngSeed, start, inc);
+                dtw = new HeuristicDTW(fileName, outDir + dirPath, distanceType, window, ranking, passes, rng, rngSeed, fnPostfix, start, inc);
                 dtw.execute();
                 break;
         }
@@ -194,11 +196,15 @@ public class InitDTWTest {
                                     "and upto 'start+increment' from the test set");
         segment.setArgs(2);
         segment.setArgName("startPoint> <increment");
+		
+		Option postfix = new Option(postfixSwitch, "add postfix to file names for identifying different experiments");
+		postfix.setArgs(1);
+		postfix.setArgName("fileNamePostfix");
 
         Options opts = new Options();
         opts.addOption(help).addOption(datafileName).addOption(outputDir).addOption(dtwType).addOption(rngType)
             .addOption(winSz).addOption(passes).addOption(segment).addOption(ranking).addOption(distMeasure)
-            .addOption(rngSeed);
+            .addOption(rngSeed).addOption(postfix);
         return opts;
     }
 }
