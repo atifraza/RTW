@@ -58,6 +58,7 @@ public class LuckyDTW extends BaseDTW {
 			e.printStackTrace();
 		}
 		
+		this.windowSizeExplicit = this.windowSize;
         if(this.windowSize == -1) {
             this.findBestWindow();
         }
@@ -99,7 +100,7 @@ public class LuckyDTW extends BaseDTW {
     				}
     				instEndTime = System.currentTimeMillis();
     				instProcessingTime = instEndTime - instStartTime;
-    				this.calcTimeAndPathLen.append(windowSize+","+i+","+j+","+instProcessingTime+","+warpInfo.getWarpPathLength()+"\n");
+    				this.calcTimeAndPathLen.append(windowSizeExplicit+","+i+","+j+","+instProcessingTime+","+warpInfo.getWarpPathLength()+"\n");
                     if(testInstDistancesMap.containsKey(train.getTSClass())) {
                         testInstDistancesMap.get(train.getTSClass()).addValue(bestWarping.getWarpDistance());
                     } else {
@@ -116,7 +117,7 @@ public class LuckyDTW extends BaseDTW {
                     temp = (DescriptiveStatistics)mapEntry.getValue();
                     minDistPerClass += "," + temp.getMin();
                 }
-    			this.accuracy.append(windowSize+","+(i+h)+","+test.getTSClass()+","+classPredicted+minDistPerClass+"\n");
+    			this.accuracy.append(windowSizeExplicit+","+(i+h)+","+test.getTSClass()+","+classPredicted+minDistPerClass+"\n");
     		}
         }
         System.out.print("100%");

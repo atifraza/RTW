@@ -6,7 +6,8 @@ declare -a warpingTypes=("L" "N" "R")
 declare -a generators=("G") #"U" "S"
 declare -a ranking=("E") # "L"
 oDir="win-size_0-100"
-jarName="warping.jar"
+jarName="randwarp.jar"
+#postfix=""
 for dSet in "${datasetNames[@]}"; do
     # Run experiment for Euclidean distance
 	taskset -c $cpu java -jar $jarName --file $dSet --type E --out-dir $oDir/$dSet

@@ -1,11 +1,6 @@
 close all; clear all; clc
 % Read all the files named below
 % fileNames = {'Beef'};
-% fileNames = {'50words', 'Car', 'CBF', 'CinC_ECG_torso', 'Cricket_X', 'Cricket_Y', 'Cricket_Z', ...
-%              'FaceAll', 'FaceFour', 'FacesUCR', 'FISH', 'Gun_Point', 'Haptics', 'InlineSkate', ...
-%              'Lighting2', 'Lighting7', 'MedicalImages', 'OSULeaf', 'Plane', 'SwedishLeaf', ...
-%              'Symbols', 'synthetic_control', 'Trace', 'Two_Patterns', ...
-%              'wafer', 'WordsSynonyms', 'yoga'};
 
 fileNames = {'50words', 'Adiac', 'Beef', 'Car', 'CBF', 'ChlorineConcentration', 'CinC_ECG_torso',...
              'Coffee', 'Cricket_X', 'Cricket_Y', 'Cricket_Z', 'DiatomSizeReduction', 'ECG200',   ...
@@ -13,9 +8,8 @@ fileNames = {'50words', 'Adiac', 'Beef', 'Car', 'CBF', 'ChlorineConcentration', 
              'InlineSkate', 'ItalyPowerDemand', 'Lighting2', 'Lighting7', 'MALLAT',              ...
              'MedicalImages', 'MoteStrain', 'OliveOil', 'OSULeaf', 'Plane', 'SonyAIBORobotSurface',...
              'SonyAIBORobotSurfaceII', 'SwedishLeaf', 'Symbols', 'synthetic_control', 'Trace',   ...
-             'Two_Patterns', 'TwoLeadECG', ...'uWaveGestureLibrary_X', 'uWaveGestureLibrary_Y', 
-             ...'uWaveGestureLibrary_Z', 
-             'wafer', 'WordsSynonyms', 'yoga'};
+             'Two_Patterns', 'TwoLeadECG', 'uWaveGestureLibrary_X', 'uWaveGestureLibrary_Y',        ...
+             'uWaveGestureLibrary_Z', 'wafer', 'WordsSynonyms', 'yoga'};
 
 % Aesthetic settings
 fSz = 14;   fName = 'Times';    mrkrSz=7;   lnWd=2;
@@ -23,7 +17,7 @@ fSz = 14;   fName = 'Times';    mrkrSz=7;   lnWd=2;
 % Printing settings
 format='-dpng'; % -depsc
 ext   ='.png';  % .eps
-res='-r0'; % -r300
+res='-r300'; % -r0
 plotMinClassDiffs = 0;
 
 % Experimental settings used
@@ -32,15 +26,15 @@ rankingType = 'exp'; %lin
 windowSize = [100, 20, 15, 10, 5]; %[1:20, 30:10:100, -2]
 numDetDist = 3;
 dist = [...
-    struct('marker', '.',  'color', [228, 26, 28], 'long', 'Euclidean',  'short', 'ED'),... 'p'
-    struct('marker', '.',  'color', [ 55,126,184], 'long', 'Normal',     'short', 'DTW'),... 'h'
-    struct('marker', '.',  'color', [ 77,175, 74], 'long', 'Lucky',      'short', 'LTW'),... 's'
-    struct('marker', '.',  'color', [152, 78,163], 'long', 'Gaussian',   'short', 'RTW-G EucDist'),... '*'
-    struct('marker', '.',  'color', [255,127,  0], 'long', 'Gaussian_Manhattan',    'short', 'RTW-G ManDist'),...'*.'
-%     struct('marker', '.',  'color', [255,255, 51], 'long', 'Uniform',    'short', 'RTW-U EucDist'),... '+'
-%     struct('marker', '.',  'color', [166, 86, 40], 'long', 'Uniform_Manhattan',    'short', 'RTW-U ManDist'),... '+.'
-%     struct('marker', '.',  'color', [247,129,191], 'long', 'SkewedNormal',    'short', 'RTW-SN EucDist'),... 'x'
-%     struct('marker', '.',  'color', [153,153,153], 'long', 'SkewedNormal_Manhattan',    'short', 'RTW-SN ManDist'),... 'x.'
+    struct('marker', '.',  'color', [228, 26, 28], 'long', 'Euclidean',             'short', 'ED'),... 'p'
+    struct('marker', '.',  'color', [ 55,126,184], 'long', 'Normal_Euclidean',      'short', 'DTW'),... 'h'
+    struct('marker', '.',  'color', [ 77,175, 74], 'long', 'Lucky_Euclidean',       'short', 'LTW'),... 's'
+    struct('marker', '.',  'color', [152, 78,163], 'long', 'Gaussian_Euclidean',	'short', 'RTW-Lp2'),... '*'
+    struct('marker', '.',  'color', [255,127,  0], 'long', 'Gaussian_Manhattan',    'short', 'RTW-Lp1'),...'*.'
+    struct('marker', '.',  'color', [166, 86, 40], 'long', 'Gaussian_Euclidean_CumulativeDist',    'short', 'CumDist'),... '+'
+    struct('marker', '.',  'color', [247,129,191], 'long', 'Gaussian_Euclidean_SqueezedDist',    'short', 'Squeezed'),... '+.'
+    struct('marker', '.',  'color', [153,153,153], 'long', 'Gaussian_Euclidean_PureRand',    'short', 'PureRand'),... 'x'
+%     struct('marker', '.',  'color', [255,255, 51], 'long', 'SkewedNormal_Manhattan',    'short', 'RTW-SN ManDist'),... 'x.'
     ];
 names = cell(1,length(dist));
 for typeInd =1:length(dist)
@@ -71,7 +65,7 @@ for restart = restarts
         
         for window = windowSize
             if(window == -2)
-                windowName = strcat('W_', 'Irregular');
+                windowName = 'W_Irregular';
                 errIrWin.(fileNameVar) = zeros(1, 2*(length(dist)-numDetDist));
                 accuracyMat.(windowName) = zeros(length(fileNames), 2*(length(dist)-numDetDist));
                 runTimesMat.(windowName) = zeros(length(fileNames), length(dist)-numDetDist);
@@ -168,6 +162,18 @@ for restart = restarts
                         else
                             classes.(fileNameVar).Target = obtainedClassification(obtainedClassification(:,1)==1,4);
                         end
+                    else
+                        if(typeInd<=numDetDist)
+                            if(classes.(fileNameVar).Target ~= obtainedClassification(:,3))
+                                disp('Mismatching training set order');
+                                pause
+                            end
+                        else
+                            if(classes.(fileNameVar).Target ~= obtainedClassification(obtainedClassification(:,1)==1,4))
+                                disp('Mismatching training set order');
+                                pause
+                            end
+                        end
                     end
                     if(strcmp(dist(typeInd).long, 'Euclidean'))
                         allresults.(fileNameVar).(char(dist(typeInd).long)).('totalTime') = totalTime;
@@ -190,7 +196,7 @@ for restart = restarts
         
         for window = windowSize
             if(window == -2)
-                windowName = strcat('W_', 'Irregular');
+                windowName = 'W_Irregular';
                 % Since we have 3 deterministic methods not using multiple runs
                 acc_PerRun.(windowName) = zeros(numRuns, length(dist)-numDetDist);
                 err_PerRun.(windowName) = zeros(numRuns, length(dist)-numDetDist);
@@ -308,7 +314,7 @@ for restart = restarts
         
         positiveWindowSize = windowSize;
         positiveWindowSize(positiveWindowSize<0) = [];
-        currFigHandle=figure('Units','inches', 'Position',[0 0 12 12]);
+        currFigHandle=figure('Units','inches', 'Position',[0 0 12 12], 'PaperPositionMode', 'auto');
         set(gcf,'Visible', 'off');
         hold on
         h = zeros(1,length(dist));
@@ -329,13 +335,28 @@ for restart = restarts
                             'Color', color_mat(typeInd,:)/255);
         end
         if(sum(windowSize<0)~=0)
-            for typeInd = numDetDist+1:length(dist)
-                h1(typeInd) = plot(positiveWindowSize, repmat(errIrWin.(fileNameVar)(1,(typeInd-numDetDist)*2-1), 1, length(positiveWindowSize))  );
-                set(h1(typeInd), 'Marker', char(dist(typeInd).marker), ...
-                                'MarkerSize', mrkrSz, ...
-                                'LineStyle', '-', ...
-                                'LineWidth', lnWd, ...
-                                'Color', color_mat(typeInd,:)/255/2);
+            if(find(windowSize==-2))
+                for typeInd = numDetDist+1:length(dist)
+                    h1(typeInd) = plot(positiveWindowSize, repmat(errIrWin.(fileNameVar)(1,(typeInd-numDetDist)*2-1), 1, length(positiveWindowSize))  );
+                    set(h1(typeInd), 'Marker', char(dist(typeInd).marker), ...
+                                    'MarkerSize', mrkrSz, ...
+                                    'LineStyle', '-', ...
+                                    'LineWidth', lnWd, ...
+                                    'Color', color_mat(typeInd,:)/255/2);
+                end
+            elseif(find(windowSize==-1))
+                for typeInd = 1:length(dist)
+                    if(strcmp(dist(typeInd).long, 'Euclidean'))
+                        continue;
+                    else
+                        h1(typeInd) = plot(positiveWindowSize, repmat(errBestWin.(fileNameVar)(1,typeInd), 1, length(positiveWindowSize))  );
+                        set(h1(typeInd), 'Marker', char(dist(typeInd).marker), ...
+                                        'MarkerSize', mrkrSz, ...
+                                        'LineStyle', '-', ...
+                                        'LineWidth', lnWd, ...
+                                        'Color', color_mat(typeInd,:)/255/2);
+                    end
+                end
             end
         end
         set(gca, 'XGrid', 'on', 'XMinorGrid', 'on')
@@ -366,26 +387,28 @@ for restart = restarts
                 rt_Combined(:, typeInd) = allresults.(fileNameVar).(char(dist(typeInd).long)).(windowName).runTimes;
             end
 
-            currFigHandle=figure('Units','inches', 'Position',[0 0 8 8]);
+            currFigHandle=figure('Units','inches', 'Position',[0 0 8 8], 'PaperPositionMode', 'auto');
             set(gcf,'Visible', 'off');
-            rtHandle = subplot(2,1,1);
+            accHandle = subplot(2,1,1);
             hold on
-            for methodNum = 1:size(rt_Combined,2)
-                bar(methodNum, mean(rt_Combined(:,methodNum), 1), 0.5, 'FaceColor', color_mat(methodNum,:)/255);
+            for methodNum = 1:size(acc_Combined,2)
+                bar(methodNum, mean(acc_Combined(:,methodNum), 1), 0.5, 'FaceColor', color_mat(methodNum,:)/255);
             end
-            errorbar(mean(rt_Combined, 1), std(rt_Combined, 1), 'kx');
-            set(rtHandle, 'XTick', 1:length(names), 'XTickLabel', names, 'YGrid', 'on')
-            accHandle = subplot(2,1,2);
-            bpHandle = boxplot(acc_Combined, 'colors', color_mat/255, 'symbol', '+', 'labels', names);
+            errorbar(mean(acc_Combined, 1), std(acc_Combined, 1), 'kx');
+            set(accHandle, 'XTick', 1:length(names), 'XTickLabel', names, 'YGrid', 'on')
+            set(accHandle, 'YGrid', 'on')
+            title(accHandle, {char(strcat(char(fileNames(ind)), {' - Window size: '}, num2str(window), '%'));'Accuracy'}, 'Interpreter', 'none', 'FontSize', fSz+2)
+            ylabel(accHandle, 'percentage', 'FontSize', fSz, 'FontName', fName)
+
+            rtHandle = subplot(2,1,2);
+            bpHandle = boxplot(rt_Combined, 'colors', color_mat/255, 'symbol', '+', 'labels', names);
 %             for i = 1:size(bpHandle,2)
 %                 set(bpHandle(:,i), 'LineWidth', lnWd);
 %             end
 %             ylim([0 100])
-            set(accHandle, 'YGrid', 'on')
-            title(rtHandle, {char(strcat(char(fileNames(ind)), {' - Window size: '}, num2str(window), '%'));'Runtime'}, 'Interpreter', 'none', 'FontSize', fSz+2)
+            set(rtHandle, 'YGrid', 'on')
+            title(rtHandle, 'Runtime', 'Interpreter', 'none', 'FontSize', fSz+2)
             ylabel(rtHandle, 'seconds', 'FontSize', fSz, 'FontName', fName)
-            title(accHandle, 'Accuracy', 'Interpreter', 'none', 'FontSize', fSz+2)
-            ylabel(accHandle, 'percentage', 'FontSize', fSz, 'FontName', fName)
             print(gcf, format, res, char(strcat(dir.Out, fileNames(ind), '/',windowName, '_Restarts', runType, ext)));
             close gcf
         end
@@ -408,7 +431,7 @@ for restart = restarts
         distNum = 1;
         for heu = 1:2:2*(length(dist)-numDetDist)
             for det = 1:length(deterministic)
-                figure('Units','inches', 'Position',[0 0 8 8]);
+                figure('Units','inches', 'Position',[0 0 8 8], 'PaperPositionMode', 'auto');
                 set(gcf,'Visible', 'off');
                 hold on; grid on; axis square
                 xlim([-2 102]);ylim([-2 102]);
@@ -429,7 +452,7 @@ for restart = restarts
                 print(gcf, format, res, char(strcat(dir.Out, 'Accuracy/', num2str(window), '/', char(ylabelString(distNum)), {' vs '}, char(xlabelString(det)), ext)));
                 close gcf
                 % Plot a ratio by ratio plot for accuracy and runtime
-                figure('Units','inches', 'Position',[0 0 4 4]);
+                figure('Units','inches', 'Position',[0 0 4 4], 'PaperPositionMode', 'auto');
                 set(gcf,'Visible', 'off');
                 axis tight;
                 maxAcc = max([accuracyMat.(windowName)(:,deterministic(det)),accuracyMat.(windowName)(:,numDetDist+heu)],[],2);

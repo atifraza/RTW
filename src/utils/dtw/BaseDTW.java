@@ -26,6 +26,7 @@ public class BaseDTW {
 	protected long totalTime;		// variables to calculate the time taken to calculate the DTW
 	
 	protected int windowSize;		// Window size to use for DTW calculation
+	protected int windowSizeExplicit;
 	
 	protected StringBuilder calcTimeAndPathLen,		// StringBuffer to save Calculation Time and Path Lengths 
 							accuracy;				// StringBuffer to save the accuracy results

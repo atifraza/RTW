@@ -93,6 +93,7 @@ public class HeuristicDTW extends BaseDTW {
 			e.printStackTrace();
 		}
         
+		this.windowSizeExplicit = this.windowSize;
         if(this.windowSize == -1) {
             this.findBestWindow();
         }
@@ -152,7 +153,7 @@ public class HeuristicDTW extends BaseDTW {
                         }
                         instEndTime = System.currentTimeMillis();
                         instProcessingTime = instEndTime - instStartTime;
-                        this.calcTimeAndPathLen.append(runNum+","+windowSize+","+i+","+j+","+instProcessingTime+","+bestPathLength+"\n");
+                        this.calcTimeAndPathLen.append(runNum+","+windowSizeExplicit+","+i+","+j+","+instProcessingTime+","+bestPathLength+"\n");
                         if(testInstDistancesMap.containsKey(train.getTSClass())) {
                             testInstDistancesMap.get(train.getTSClass()).addValue(bestWarping.getWarpDistance());
                         } else {
@@ -169,7 +170,7 @@ public class HeuristicDTW extends BaseDTW {
                     	temp = (DescriptiveStatistics)mapEntry.getValue();
                     	minDistPerClass += "," + temp.getMin();
                     }
-                    this.accuracy.append(runNum+","+windowSize+","+(i+h)+","+test.getTSClass()+","+classPredicted+minDistPerClass+"\n");
+                    this.accuracy.append(runNum+","+windowSizeExplicit+","+(i+h)+","+test.getTSClass()+","+classPredicted+minDistPerClass+"\n");
                 }
             }
             System.out.print("100%");
