@@ -141,6 +141,13 @@ public class BaseDTW {
 	        }
 	    }
 	    this.windowSize = bestWindow;
+	    try {
+	        BufferedWriter bwBestWindow = new BufferedWriter(new FileWriter(this.filePath + "_BestWindow.csv", false));
+	        bwBestWindow.write(this.windowSize + "\n");
+	        bwBestWindow.close();
+	    } catch (Exception e) {
+	        System.err.println(e);
+	    }
 	    System.out.println("Best window:      " + bestWindow);
         System.out.println("Least error:      " + leastError);
 	}
