@@ -15,9 +15,9 @@ import org.apache.commons.math3.util.FastMath;
  *
  * @see <a href="http://en.wikipedia.org/wiki/Skew_normal_distribution"> Skewed Normal distribution (Wikipedia)</a>
  * @see <a href="http://azzalini.stat.unipd.it/SN/"> The Skew-Normal Probability Distribution</a>
+ * 
+ * @author Atif Raza
  */
-
-
 public class SkewedNormalDistribution extends AbstractRealDistribution {
     /**
 	 * 
@@ -39,12 +39,6 @@ public class SkewedNormalDistribution extends AbstractRealDistribution {
     private static final double BETA = 2.0 - FastMath.PI/2.0;
     private static final double BETA_Squared_CubeRooted = FastMath.pow(BETA*BETA, 1.0/3.0);
     private static final double PI_by_2_Squared = FastMath.sqrt(FastMath.PI/2.0);
-//    /** The value of {@code log(sd) + 0.5*log(2*pi)} stored for faster computation. */
-//    private final double logStandardDeviationPlusHalfLog2Pi;
-//    /** Inverse cumulative probability accuracy. */
-//    private final double solverAbsoluteAccuracy;
-//    /** &radic;(2) */
-//    private static final double SQRT2 = FastMath.sqrt(2.0);
 
     /**
      * Create a skew normal distribution with mean equal to zero, standard
@@ -55,28 +49,27 @@ public class SkewedNormalDistribution extends AbstractRealDistribution {
      * {@link #sample()} and {@link #sample(int)}). In case no sampling is
      * needed for the created distribution, it is advised to pass {@code null}
      * as random generator via the appropriate constructors to avoid the
-     * additional initialisation overhead.
+     * additional initialization overhead.
      */
     public SkewedNormalDistribution() {
         this(0, 1, 0);
     }
 
     /**
-     * Create a normal distribution using the given mean, standard deviation and
-     * inverse cumulative distribution accuracy.
+     * Create a skew normal distribution using the given mean, standard 
+     * deviation and inverse cumulative distribution accuracy.
      * <p>
      * <b>Note:</b> this constructor will implicitly create an instance of
      * {@link Well19937c} as random generator to be used for sampling only (see
      * {@link #sample()} and {@link #sample(int)}). In case no sampling is
      * needed for the created distribution, it is advised to pass {@code null}
      * as random generator via the appropriate constructors to avoid the
-     * additional initialisation overhead.
+     * additional initialization overhead.
      *
      * @param mean Mean for this distribution.
      * @param sd Standard deviation for this distribution.
-     * @param inverseCumAccuracy Inverse cumulative probability accuracy.
+     * @param sk skewness of the distribution.
      * @throws NotStrictlyPositiveException if {@code sd <= 0}.
-     * @since 2.1
      */
     public SkewedNormalDistribution(double mean, double sd, double sk)
         throws NotStrictlyPositiveException {
@@ -84,18 +77,16 @@ public class SkewedNormalDistribution extends AbstractRealDistribution {
     }
 
     /**
-     * Creates a normal distribution.
+     * Create a skew normal distribution using the given random number generator,
+     * mean, standard deviation and inverse cumulative distribution accuracy.
      *
      * @param rng Random number generator.
      * @param mean Mean for this distribution.
      * @param sd Standard deviation for this distribution.
-     * @param inverseCumAccuracy Inverse cumulative probability accuracy.
+     * @param sk skewness of the distribution.
      * @throws NotStrictlyPositiveException if {@code sd <= 0}.
-     * @since 3.1
      */
-    public SkewedNormalDistribution(RandomGenerator rng,
-                                    double mean,
-                                    double sd,
+    public SkewedNormalDistribution(RandomGenerator rng, double mean, double sd,
                                     double sk)
         throws NotStrictlyPositiveException, NumberIsTooLargeException {
         super(rng);
@@ -113,19 +104,26 @@ public class SkewedNormalDistribution extends AbstractRealDistribution {
         this.updateParams(mean, sd, sk);
     }
     
-    public void updateParams(double mn, double sd, double sk) {
+    /**
+     * Update the parameters for the distribution to change it's characteristics
+     * 
+     * @param mean Mean (new required value) for the distribution
+     * @param sd Standard deviation (new required value) for the distribution
+     * @param sk skewness (new required value) for the distribution
+     */
+    public void updateParams(double mean, double sd, double sk) {
         double skew_Squared_CubeRooted = FastMath.pow(sk*sk, 1.0/3.0);        
         double eps_Squared = skew_Squared_CubeRooted/(skew_Squared_CubeRooted+BETA_Squared_CubeRooted);
         double eps = FastMath.copySign(FastMath.sqrt(eps_Squared), sk);
         double delta = eps * PI_by_2_Squared;
         
-        this.mean = mn;
+        this.mean = mean;
         this.standardDeviation = sd;
         this.skew = sk;
         
         this.shape = delta/FastMath.sqrt(1.0-delta*delta);
         this.scale = sd/FastMath.sqrt(1.0-eps*eps);
-        this.location = mean - this.scale*eps;        
+        this.location = this.mean - this.scale*eps;        
     }
     
 //    /**
