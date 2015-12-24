@@ -67,7 +67,6 @@ public class NearestNeighbourED extends NearestNeighbourBase {
     @Override
     public void classify() {
         TSDistance warpInfo = new TSDistance();
-        TSDistance bestWarping = new TSDistance();
         
         long instStartTime, instEndTime, instProcessingTime;
         TimeSeries test = null, train = null;
@@ -98,7 +97,6 @@ public class NearestNeighbourED extends NearestNeighbourBase {
                     if (warpInfo.getTSDistance() < bestDist) {
                         bestDist = warpInfo.getTSDistance();
                         classPredicted = train.getTSClass();
-                        bestWarping = warpInfo;
                     }
                     instEndTime = System.currentTimeMillis();
                     instProcessingTime = instEndTime - instStartTime;
@@ -109,12 +107,12 @@ public class NearestNeighbourED extends NearestNeighbourBase {
                                                    + "\n");
                     if (testInstDistancesMap.containsKey(train.getTSClass())) {
                         testInstDistancesMap.get(train.getTSClass())
-                                            .addValue(bestWarping.getTSDistance());
+                                            .addValue(warpInfo.getTSDistance());
                     } else {
                         testInstDistancesMap.put(train.getTSClass(),
                                                  new DescriptiveStatistics());
                         testInstDistancesMap.get(train.getTSClass())
-                                            .addValue(bestWarping.getTSDistance());
+                                            .addValue(warpInfo.getTSDistance());
                     }
                 }
                 DescriptiveStatistics temp;

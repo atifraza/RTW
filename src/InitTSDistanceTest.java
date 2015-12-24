@@ -20,7 +20,7 @@ public class InitTSDistanceTest {
     protected static String helpSw = "h";
     protected static String helpSwL = "help";
     protected static String windowSw = "w";
-    protected static String bandSwL = "window";
+    protected static String windowSwL = "window";
     protected static String twTypeSw = "t";
     protected static String twTypeSwL = "type";
     protected static String rngSw = "g";
@@ -72,8 +72,8 @@ public class InitTSDistanceTest {
                                                     // corresponding
                                                     // help text
         try {
-            // Create a GnuParser object
-            CommandLineParser cliParser = new GnuParser();
+            // Create a DefaultParser object
+            CommandLineParser cliParser = new DefaultParser();
             // Parse provided CLI arguments according to available options
             CommandLine cmdLine = cliParser.parse(options, args);
             if (cmdLine.getOptions().length == 0 || cmdLine.hasOption(helpSw)) {
@@ -186,67 +186,58 @@ public class InitTSDistanceTest {
     }
     
     private static Options constructCLIOptions() {
-        Option help = new Option(helpSw, "prints the help for the program");
-        help.setLongOpt(helpSwL);
-        
-        Option datafileName = new Option(fileSw,
+        Option help = new Option(helpSw, helpSwL, false,
+                                 "prints the help for the program");
+                                 
+        Option datafileName = new Option(fileSw, fileSwL, true,
                                          "name of the dataset - REQUIRED Parameter");
-        datafileName.setLongOpt(fileSwL);
         datafileName.setRequired(true);
         datafileName.setArgs(1);
         datafileName.setArgName("dataset");
         
-        Option dtwType = new Option(twTypeSw,
+        Option dtwType = new Option(twTypeSw, twTypeSwL, true,
                                     "defines the warping/distance type, valid options are "
                                               + "R - RandomizedTW (default), D - DTW, L - LuckyTW, E - Euclidean Distance");
-        dtwType.setLongOpt(twTypeSwL);
         dtwType.setArgs(1);
         dtwType.setArgName("warpingType");
         
-        Option winSz = new Option(windowSw,
+        Option winSz = new Option(windowSw, windowSwL, true,
                                   "Warping window size percentage e.g. 1, 5, 10, 50, 100 (default)\n"
                                             + "-1 for Calculating through Leave One Out Cross Validation of Training Set");
-        winSz.setLongOpt(bandSwL);
         winSz.setArgs(1);
         winSz.setArgName("percent");
         
-        Option outputDir = new Option(outDirSw,
+        Option outputDir = new Option(outDirSw, outDirSwL, true,
                                       "sub-directory of data directory to use for saving the results");
-        outputDir.setLongOpt(outDirSwL);
         outputDir.setArgs(1);
         outputDir.setArgName("directory");
         
-        Option rngType = new Option(rngSw,
+        Option rngType = new Option(rngSw, rngSwL, true,
                                     "defines the RNG type, G (Gaussian random numbers - default), "
                                            + "U (Uniform random numbers)");
-        rngType.setLongOpt(rngSwL);
         rngType.setArgs(1);
         rngType.setArgName("rngType");
         
-        Option rngSeed = new Option(rngSeedSw,
+        Option rngSeed = new Option(rngSeedSw, rngSeedSwL, true,
                                     "-1 (default) for automatic seeding of RNG,  or integer as seed"
                                                + "(0 or greater)");
-        rngSeed.setLongOpt(rngSeedSwL);
         rngSeed.setArgs(1);
         rngSeed.setArgName("rngSeed");
         
-        Option passes = new Option(passesSw,
+        Option passes = new Option(passesSw, passesSwL, true,
                                    "number of restarts for RandomizedTW calculations 0 (default), "
                                              + "I (increasing with number of runs), integer (for constant number of restarts)");
-        passes.setLongOpt(passesSwL);
         passes.setArgs(1);
         passes.setArgName("number");
         
-        Option ranking = new Option(rankingSw,
+        Option ranking = new Option(rankingSw, rankingSwL, true,
                                     "type of ranking e.g. E (exponential - default), L (linear)");
-        ranking.setLongOpt(rankingSwL);
         ranking.setArgs(1);
         ranking.setArgName("method");
         
-        Option distMeasure = new Option(normSw,
+        Option distMeasure = new Option(normSw, normSwL, true,
                                         "type of distance measure e.g. 2 (Euclidean - default), "
                                                 + "1 (Manhattan), p (positive number for Lp norm with power=p, 0 (Binary))");
-        distMeasure.setLongOpt(normSwL);
         distMeasure.setArgs(1);
         distMeasure.setArgName("distMeasure");
         

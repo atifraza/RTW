@@ -122,7 +122,6 @@ public class NearestNeighbourRTW extends NearestNeighbourBase {
     @Override
     public void classify() {
         TSDistance warpInfo = new TSDistance();
-        TSDistance bestWarping = new TSDistance();
         
         long instStartTime, instEndTime, instProcessingTime, runStartTime,
                 runEndTime;
@@ -173,7 +172,6 @@ public class NearestNeighbourRTW extends NearestNeighbourBase {
                                 bestDist = warpInfo.getTSDistance();
                                 classPredicted = train.getTSClass();
                                 bestPathLength = warpInfo.getWarpPathLength();
-                                bestWarping = warpInfo;
                             }
                         }
                         instEndTime = System.currentTimeMillis();
@@ -186,12 +184,12 @@ public class NearestNeighbourRTW extends NearestNeighbourBase {
                                                        + "\n");
                         if (testInstDistancesMap.containsKey(train.getTSClass())) {
                             testInstDistancesMap.get(train.getTSClass())
-                                                .addValue(bestWarping.getTSDistance());
+                                                .addValue(warpInfo.getTSDistance());
                         } else {
                             testInstDistancesMap.put(train.getTSClass(),
                                                      new DescriptiveStatistics());
                             testInstDistancesMap.get(train.getTSClass())
-                                                .addValue(bestWarping.getTSDistance());
+                                                .addValue(warpInfo.getTSDistance());
                         }
                     }
                     DescriptiveStatistics temp;
