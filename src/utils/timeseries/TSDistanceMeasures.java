@@ -54,13 +54,16 @@ public class TSDistanceMeasures {
     private double std_dev = 1.0 / 3.0;
     
     /** Whether to save the warping path or not */
-    private boolean saveWarpPath = false;
+    private boolean saveWarpPath = true;
     
     // EXPERIMENTATION STUFF BELOW
     /** Whether to ignore cell distances and use pure randomization */
     private boolean isPureRandom = false;
     // private int distributionType;    // SkewedNormal
     // private double SKEW = 0;         // SkewedNormal
+    
+    public int[][] windowMinMax;
+    protected boolean isIrregular = false;
     
     /**
      * Constructs a TSDistanceMeasure object by initializing cost
@@ -76,6 +79,11 @@ public class TSDistanceMeasures {
      */
     public TSDistanceMeasures(int tsILen, int tsJLen, int windowPercent) {
         costMatrix = new double[tsILen][tsJLen];
+        windowMinMax = new int[tsILen][2];
+        for(int i = 0; i<tsILen; i++) {
+            windowMinMax[i][0] = Integer.MAX_VALUE;
+            windowMinMax[i][1] = Integer.MIN_VALUE;
+        }
         setWindowSize(tsILen, tsJLen, windowPercent);
     }
     
@@ -274,7 +282,10 @@ public class TSDistanceMeasures {
         
         while (i < maxI && j < maxJ) {
             // Check if diagonal move is possible
-            if (i + 1 < maxI && j + 1 < maxJ) {
+            if ((i + 1 < maxI && j + 1 < maxJ) && 
+                    (!this.isIrregular || 
+                            (this.windowMinMax[i + 1][0] <= j + 1
+                            && j + 1 < windowMinMax[i + 1][1]))) {
                 costDiag = distFn.calcDistance(tsI.get(i + 1), tsJ.get(j + 1));
             } else {
                 costDiag = 1e12;
@@ -283,7 +294,8 @@ public class TSDistanceMeasures {
             // If going down a row is possible
             // if winLen = 2, col (j) = 0, row (i) = 2, then
             // winLen (2) + col (0) = 2; so going down is not possible
-            if (i + 1 < Math.min(this.windowLen + j, maxI)) {
+            if ((i + 1 < Math.min(this.windowLen + j, maxI)) && 
+                    (!this.isIrregular || (windowMinMax[i + 1][0] <= j))) {
                 costDown = distFn.calcDistance(tsI.get(i + 1), tsJ.get(j));
             } else {
                 costDown = 1e12;
@@ -293,7 +305,7 @@ public class TSDistanceMeasures {
             // if winLen = 2, row (i) = 0, col (j) = 2, then
             // winLen (2) + row (0) = 2; so going right is not
             // possible
-            if (j + 1 < Math.min(this.windowLen + i, maxJ)) {
+            if ((j + 1 < Math.min(this.windowLen + i, maxJ)) && (!this.isIrregular || (j + 1 < windowMinMax[i][1]))) {
                 costRight = distFn.calcDistance(tsI.get(i), tsJ.get(j + 1));
             } else {
                 costRight = 1e12;
@@ -358,7 +370,7 @@ public class TSDistanceMeasures {
         return distInfo;
     }
     
-    /**
+     /**
      * Calculates the DTW distance
      * 
      * @param tsI TimeSeries instance from test set
@@ -616,5 +628,12 @@ public class TSDistanceMeasures {
             }
         }
         return distInfo;
+    }
+    
+    /*
+     * 
+     */
+    public void setIrregularFlag() {
+        this.isIrregular = true;
     }
 }

@@ -25,7 +25,7 @@ import utils.distance.*;
  * 
  * @author Atif Raza
  */
-public class NearestNeighbourBase {
+public abstract class NearestNeighbourBase {
     /** Dataset to process */
     protected String datasetName;
     
@@ -337,11 +337,131 @@ public class NearestNeighbourBase {
         System.out.println("Least error:      " + leastError);
     }
     
+    public void findIrregularWindow() {
+        int bestWindow = 0;
+        double leastError = Double.MAX_VALUE;
+        double dist;
+        double bestDist;
+        double currError = 0;
+        int correctClassified;
+        int classPredicted=0;
+        TimeSeries testInst, trainInst;
+        TSDistance warpInfo = new TSDistance();
+        TSDistance bestPath;
+        ArrayList<int[][]> winMinMaxList;
+        int[][] windowMinMaxCurrent;
+        int[] pathElement = new int[2];
+        
+        for(int currWindow = 0; currWindow<=100; currWindow++) {
+            correctClassified = 0;
+            bestPath = new TSDistance();
+            winMinMaxList = new ArrayList<int[][]>();
+
+            for(int testInd=0; testInd<trainSet.size(); testInd++) {
+                dist = Double.MAX_VALUE;
+                testInst = trainSet.get(testInd);
+                bestDist = Double.MAX_VALUE;
+                tsDM.setWindowSize(testInst.size(), testInst.size(), currWindow);
+                windowMinMaxCurrent = new int[trainSet.get(0).size()][2];
+                for(int i = 0; i<trainSet.get(0).size(); i++) {
+                    windowMinMaxCurrent[i][0] = Integer.MAX_VALUE;
+                    windowMinMaxCurrent[i][1] = Integer.MIN_VALUE;
+                }
+                for(int trainInd=0; trainInd<trainSet.size(); trainInd++) {
+                    if(testInd != trainInd) {
+                        trainInst = trainSet.get(trainInd);
+                        for(int run=1; run<=10; run++) {
+                            warpInfo = tsDM.getRTW(testInst, trainInst, distFn);
+                            dist = warpInfo.getTSDistance();
+                            if(dist<bestDist) {
+                                bestDist = dist;
+                                bestPath = warpInfo;
+                                classPredicted = trainInst.getTSClass();
+                            }
+                            
+                        }
+                    }
+                }
+                for(int i=0; i<bestPath.getWarpPathLength(); i++) {
+                    pathElement = bestPath.getPathElement(i);
+                    if(pathElement[1]<windowMinMaxCurrent[pathElement[0]][0]) {
+                        windowMinMaxCurrent[pathElement[0]][0] = pathElement[1];
+                    }
+                    if(pathElement[1]>windowMinMaxCurrent[pathElement[0]][1]) {
+                        windowMinMaxCurrent[pathElement[0]][1] = pathElement[1]+1;
+                    }
+                }
+                winMinMaxList.add(windowMinMaxCurrent);
+                if(testInst.getTSClass()==classPredicted) {
+                    correctClassified++;
+                }
+            }
+            
+            int[][] windowMinMax = new int[trainSet.get(0).size()][2];
+            int observedMin = Integer.MAX_VALUE, observedMax = Integer.MIN_VALUE;
+            double sumMin = 0, sumMax = 0;
+            double avgMin = 0, avgMax = 0;
+            double sumVariationsMin = 0, sumVariationsMax = 0;
+            double sigmaMin = 0, sigmaMax = 0;
+            for(int rowInd=0; rowInd<trainSet.get(0).size(); rowInd++) {
+                sumMin = 0;
+                sumMax = 0;
+                avgMin = 0;
+                avgMax = 0;
+                observedMin = Integer.MAX_VALUE;
+                observedMax = Integer.MIN_VALUE;
+                for(int ind=0; ind<winMinMaxList.size(); ind++) {
+                    if(observedMin>winMinMaxList.get(ind)[rowInd][0]) {
+                        observedMin = winMinMaxList.get(ind)[rowInd][0];
+                    }
+                    if(observedMax<winMinMaxList.get(ind)[rowInd][1]) {
+                        observedMax = winMinMaxList.get(ind)[rowInd][1];
+                    }
+                    sumMin += winMinMaxList.get(ind)[rowInd][0];
+                    sumMax += winMinMaxList.get(ind)[rowInd][1];
+                }
+                avgMin = sumMin/winMinMaxList.size();
+                avgMax = sumMax/winMinMaxList.size();
+                for(int ind=0; ind<winMinMaxList.size(); ind++) {
+                    sumVariationsMin += Math.pow(winMinMaxList.get(ind)[rowInd][0]-avgMin, 2);
+                    sumVariationsMax += Math.pow(winMinMaxList.get(ind)[rowInd][1]-avgMax, 2);
+                }
+                sigmaMin = Math.sqrt(sumVariationsMin/(winMinMaxList.size()-1));
+                sigmaMax = Math.sqrt(sumVariationsMax/(winMinMaxList.size()-1));
+                if(observedMin<Math.floor(avgMin-2*sigmaMin) && sigmaMax!=0) {
+                    windowMinMax[rowInd][0] = (int)Math.floor(avgMin-2*sigmaMin);
+                } else {
+                    windowMinMax[rowInd][0] = observedMin;
+                }
+                if(observedMax>Math.ceil(avgMax+2*sigmaMax) && sigmaMax!=0) {
+                    windowMinMax[rowInd][1] = (int)Math.ceil(avgMax+2*sigmaMax);
+                } else {
+                    windowMinMax[rowInd][1] = observedMax;
+                }
+//                windowMinMax[rowInd][0] = (int)Math.floor((double)sumMin/winMinMaxList.size());
+//                windowMinMax[rowInd][1] = (int)Math.ceil((double)sumMax/winMinMaxList.size());
+            }
+            currError = (double)(trainSet.size()-correctClassified)/trainSet.size();
+            if(currError<leastError) {
+                leastError = currError;
+                bestWindow = currWindow;
+                System.out.print("Window Size: " + currWindow + " - Window: ");
+                for(int ind=0; ind<windowMinMax.length; ind++) {
+                    System.out.print(windowMinMax[ind][0]+ ","+windowMinMax[ind][1]+";");
+                    System.arraycopy(windowMinMax[ind], 0, tsDM.windowMinMax[ind], 0, windowMinMax[ind].length);
+                }
+                System.out.println();
+            }
+        }
+        tsDM.setIrregularFlag();
+        System.out.println("Best window: " + bestWindow + ", Least error: " + leastError);
+        this.windowSize = -2;
+    }
+
     /**
      * Method for performing the classification task
      */
-    public void classify() {
-    }
+    public abstract void classify();
     
     /**
      * Reads the dataset file and creates the ArrayList of

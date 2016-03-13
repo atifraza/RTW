@@ -116,6 +116,8 @@ public class NearestNeighbourRTW extends NearestNeighbourBase {
         
         if (this.windowSize == -1) {
             this.findBestWindow();
+        } else if (this.windowSize == -2) {
+            this.findIrregularWindow();
         }
     }
     

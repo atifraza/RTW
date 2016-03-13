@@ -87,4 +87,14 @@ public class TSDistance {
         }
         return sb.toString();
     }
+    
+    /**
+     * Returns a path element at required index
+     * 
+     * @return Warping Path Element [i, j]
+     */
+    public int[] getPathElement(int ind) {
+        int[] elements = {tsIIndices.get(ind), tsJIndices.get(ind)};
+        return elements;
+    }
 }

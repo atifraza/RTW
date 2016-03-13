@@ -203,7 +203,8 @@ public class InitTSDistanceTest {
         
         Option winSz = new Option(windowSw, windowSwL, true,
                                   "Warping window size percentage e.g. 1, 5, 10, 50, 100 (default)\n"
-                                            + "-1 for Calculating through Leave One Out Cross Validation of Training Set");
+                                            + "-1 for Calculating through Leave One Out Cross Validation of Training Set"
+                                            + "-2 for Calculating a Jagged Warping Window through Leave One Out Cross Validation of Training Set");
         winSz.setArgs(1);
         winSz.setArgName("percent");
         
