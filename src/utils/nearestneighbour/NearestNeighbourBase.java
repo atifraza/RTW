@@ -397,49 +397,33 @@ public abstract class NearestNeighbourBase {
                 }
             }
             
+            DescriptiveStatistics statsMinEdge, statsMaxEdge;
+            statsMinEdge = new DescriptiveStatistics();
+            statsMaxEdge = new DescriptiveStatistics();
+            
             int[][] windowMinMax = new int[trainSet.get(0).size()][2];
-            int observedMin = Integer.MAX_VALUE, observedMax = Integer.MIN_VALUE;
-            double sumMin = 0, sumMax = 0;
-            double avgMin = 0, avgMax = 0;
-            double sumVariationsMin = 0, sumVariationsMax = 0;
-            double sigmaMin = 0, sigmaMax = 0;
+            double medianMinEdge, medianMaxEdge, minMinEdge, maxMaxEdge;
             for(int rowInd=0; rowInd<trainSet.get(0).size(); rowInd++) {
-                sumMin = 0;
-                sumMax = 0;
-                avgMin = 0;
-                avgMax = 0;
-                observedMin = Integer.MAX_VALUE;
-                observedMax = Integer.MIN_VALUE;
+                statsMinEdge = new DescriptiveStatistics();
+                statsMaxEdge = new DescriptiveStatistics();
                 for(int ind=0; ind<winMinMaxList.size(); ind++) {
-                    if(observedMin>winMinMaxList.get(ind)[rowInd][0]) {
-                        observedMin = winMinMaxList.get(ind)[rowInd][0];
-                    }
-                    if(observedMax<winMinMaxList.get(ind)[rowInd][1]) {
-                        observedMax = winMinMaxList.get(ind)[rowInd][1];
-                    }
-                    sumMin += winMinMaxList.get(ind)[rowInd][0];
-                    sumMax += winMinMaxList.get(ind)[rowInd][1];
+                    statsMinEdge.addValue(winMinMaxList.get(ind)[rowInd][0]);
+                    statsMaxEdge.addValue(winMinMaxList.get(ind)[rowInd][1]);
                 }
-                avgMin = sumMin/winMinMaxList.size();
-                avgMax = sumMax/winMinMaxList.size();
-                for(int ind=0; ind<winMinMaxList.size(); ind++) {
-                    sumVariationsMin += Math.pow(winMinMaxList.get(ind)[rowInd][0]-avgMin, 2);
-                    sumVariationsMax += Math.pow(winMinMaxList.get(ind)[rowInd][1]-avgMax, 2);
-                }
-                sigmaMin = Math.sqrt(sumVariationsMin/(winMinMaxList.size()-1));
-                sigmaMax = Math.sqrt(sumVariationsMax/(winMinMaxList.size()-1));
-                if(observedMin<Math.floor(avgMin-2*sigmaMin) && sigmaMax!=0) {
-                    windowMinMax[rowInd][0] = (int)Math.floor(avgMin-2*sigmaMin);
+                minMinEdge = statsMinEdge.getMin();
+                medianMinEdge = statsMinEdge.getPercentile(50);
+                if(minMinEdge<Math.floor(medianMinEdge-statsMinEdge.getPercentile(25))) {
+                    windowMinMax[rowInd][0] = (int)Math.floor(medianMinEdge-statsMinEdge.getPercentile(25));
                 } else {
-                    windowMinMax[rowInd][0] = observedMin;
+                    windowMinMax[rowInd][0] = (int)minMinEdge;
                 }
-                if(observedMax>Math.ceil(avgMax+2*sigmaMax) && sigmaMax!=0) {
-                    windowMinMax[rowInd][1] = (int)Math.ceil(avgMax+2*sigmaMax);
+                maxMaxEdge = statsMaxEdge.getMax();
+                medianMaxEdge = statsMaxEdge.getPercentile(50);
+                if(maxMaxEdge>Math.ceil(medianMaxEdge+statsMaxEdge.getPercentile(75))) {
+                    windowMinMax[rowInd][1] = (int)Math.ceil(medianMaxEdge+statsMaxEdge.getPercentile(75));
                 } else {
-                    windowMinMax[rowInd][1] = observedMax;
+                    windowMinMax[rowInd][1] = (int)maxMaxEdge;
                 }
-//                windowMinMax[rowInd][0] = (int)Math.floor((double)sumMin/winMinMaxList.size());
-//                windowMinMax[rowInd][1] = (int)Math.ceil((double)sumMax/winMinMaxList.size());
             }
             currError = (double)(trainSet.size()-correctClassified)/trainSet.size();
             if(currError<leastError) {
