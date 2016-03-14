@@ -338,107 +338,98 @@ public abstract class NearestNeighbourBase {
     }
     
     public void findIrregularWindow() {
-        int bestWindow = 0;
-        double leastError = Double.MAX_VALUE;
         double dist;
         double bestDist;
-        double currError = 0;
-        int correctClassified;
-        int classPredicted=0;
         TimeSeries testInst, trainInst;
         TSDistance warpInfo = new TSDistance();
-        TSDistance bestPath;
-        ArrayList<int[][]> winMinMaxList;
+        TSDistance bestPath = new TSDistance();
+        ArrayList<int[][]> winMinMaxList = new ArrayList<int[][]>();
         int[][] windowMinMaxCurrent;
         int[] pathElement = new int[2];
-        
-        for(int currWindow = 0; currWindow<=100; currWindow++) {
-            correctClassified = 0;
-            bestPath = new TSDistance();
-            winMinMaxList = new ArrayList<int[][]>();
+        tsDM.setWindowSize(trainSet.get(0).size(), trainSet.get(0).size(), 100);
 
-            for(int testInd=0; testInd<trainSet.size(); testInd++) {
-                dist = Double.MAX_VALUE;
-                testInst = trainSet.get(testInd);
-                bestDist = Double.MAX_VALUE;
-                tsDM.setWindowSize(testInst.size(), testInst.size(), currWindow);
-                windowMinMaxCurrent = new int[trainSet.get(0).size()][2];
-                for(int i = 0; i<trainSet.get(0).size(); i++) {
-                    windowMinMaxCurrent[i][0] = Integer.MAX_VALUE;
-                    windowMinMaxCurrent[i][1] = Integer.MIN_VALUE;
-                }
-                for(int trainInd=0; trainInd<trainSet.size(); trainInd++) {
-                    if(testInd != trainInd) {
-                        trainInst = trainSet.get(trainInd);
-                        for(int run=1; run<=10; run++) {
-                            warpInfo = tsDM.getRTW(testInst, trainInst, distFn);
-                            dist = warpInfo.getTSDistance();
-                            if(dist<bestDist) {
-                                bestDist = dist;
-                                bestPath = warpInfo;
-                                classPredicted = trainInst.getTSClass();
-                            }
-                            
+        for(int testInd=0; testInd<trainSet.size(); testInd++) {
+            dist = Double.MAX_VALUE;
+            testInst = trainSet.get(testInd);
+            bestDist = Double.MAX_VALUE;
+            windowMinMaxCurrent = new int[trainSet.get(0).size()][2];
+            for(int i = 0; i<trainSet.get(0).size(); i++) {
+                windowMinMaxCurrent[i][0] = Integer.MAX_VALUE;
+                windowMinMaxCurrent[i][1] = Integer.MIN_VALUE;
+            }
+            for(int trainInd=0; trainInd<trainSet.size(); trainInd++) {
+                if(testInd != trainInd) {
+                    trainInst = trainSet.get(trainInd);
+                    for(int run=1; run<=10; run++) {
+                        warpInfo = tsDM.getRTW(testInst, trainInst, distFn);
+                        dist = warpInfo.getTSDistance();
+                        if(dist<bestDist) {
+                            bestDist = dist;
+                            bestPath = warpInfo;
                         }
                     }
                 }
-                for(int i=0; i<bestPath.getWarpPathLength(); i++) {
-                    pathElement = bestPath.getPathElement(i);
-                    if(pathElement[1]<windowMinMaxCurrent[pathElement[0]][0]) {
-                        windowMinMaxCurrent[pathElement[0]][0] = pathElement[1];
-                    }
-                    if(pathElement[1]>windowMinMaxCurrent[pathElement[0]][1]) {
-                        windowMinMaxCurrent[pathElement[0]][1] = pathElement[1]+1;
-                    }
+            }
+            for(int i=0; i<bestPath.getWarpPathLength(); i++) {
+                pathElement = bestPath.getPathElement(i);
+                if(pathElement[1]<windowMinMaxCurrent[pathElement[0]][0]) {
+                    windowMinMaxCurrent[pathElement[0]][0] = pathElement[1];
                 }
-                winMinMaxList.add(windowMinMaxCurrent);
-                if(testInst.getTSClass()==classPredicted) {
-                    correctClassified++;
+                if(pathElement[1]>windowMinMaxCurrent[pathElement[0]][1]) {
+                    windowMinMaxCurrent[pathElement[0]][1] = pathElement[1]+1;
                 }
             }
-            
-            DescriptiveStatistics statsMinEdge, statsMaxEdge;
+            winMinMaxList.add(windowMinMaxCurrent);
+        }
+        DescriptiveStatistics statsMinEdge, statsMaxEdge;
+        
+        int[][] windowMinMax = new int[trainSet.get(0).size()][2];
+        double avg = 0;
+        for(int rowInd=0; rowInd<trainSet.get(0).size(); rowInd++) {
             statsMinEdge = new DescriptiveStatistics();
             statsMaxEdge = new DescriptiveStatistics();
-            
-            int[][] windowMinMax = new int[trainSet.get(0).size()][2];
-            double medianMinEdge, medianMaxEdge, minMinEdge, maxMaxEdge;
-            for(int rowInd=0; rowInd<trainSet.get(0).size(); rowInd++) {
-                statsMinEdge = new DescriptiveStatistics();
-                statsMaxEdge = new DescriptiveStatistics();
-                for(int ind=0; ind<winMinMaxList.size(); ind++) {
-                    statsMinEdge.addValue(winMinMaxList.get(ind)[rowInd][0]);
-                    statsMaxEdge.addValue(winMinMaxList.get(ind)[rowInd][1]);
-                }
-                minMinEdge = statsMinEdge.getMin();
-                medianMinEdge = statsMinEdge.getPercentile(50);
-                if(minMinEdge<Math.floor(medianMinEdge-statsMinEdge.getPercentile(25))) {
-                    windowMinMax[rowInd][0] = (int)Math.floor(medianMinEdge-statsMinEdge.getPercentile(25));
-                } else {
-                    windowMinMax[rowInd][0] = (int)minMinEdge;
-                }
-                maxMaxEdge = statsMaxEdge.getMax();
-                medianMaxEdge = statsMaxEdge.getPercentile(50);
-                if(maxMaxEdge>Math.ceil(medianMaxEdge+statsMaxEdge.getPercentile(75))) {
-                    windowMinMax[rowInd][1] = (int)Math.ceil(medianMaxEdge+statsMaxEdge.getPercentile(75));
-                } else {
-                    windowMinMax[rowInd][1] = (int)maxMaxEdge;
-                }
+            for(int ind=0; ind<winMinMaxList.size(); ind++) {
+                statsMinEdge.addValue(winMinMaxList.get(ind)[rowInd][0]);
+                statsMaxEdge.addValue(winMinMaxList.get(ind)[rowInd][1]);
             }
-            currError = (double)(trainSet.size()-correctClassified)/trainSet.size();
-            if(currError<leastError) {
-                leastError = currError;
-                bestWindow = currWindow;
-                System.out.print("Window Size: " + currWindow + " - Window: ");
-                for(int ind=0; ind<windowMinMax.length; ind++) {
-                    System.out.print(windowMinMax[ind][0]+ ","+windowMinMax[ind][1]+";");
-                    System.arraycopy(windowMinMax[ind], 0, tsDM.windowMinMax[ind], 0, windowMinMax[ind].length);
-                }
-                System.out.println();
-            }
+            windowMinMax[rowInd][0] = (int)statsMinEdge.getSortedValues()[2];
+            windowMinMax[rowInd][1] = (int)statsMaxEdge.getSortedValues()[(int)statsMaxEdge.getN()-3];
+//            System.out.println(statsMinEdge.getSortedValues());
+//            windowMinMax[rowInd][0] = (int)statsMinEdge.getPercentile(5);
+//            windowMinMax[rowInd][1] = (int)statsMaxEdge.getPercentile(95);
+            avg += windowMinMax[rowInd][1]-windowMinMax[rowInd][0];
         }
+        avg /= trainSet.get(0).size();
+//            for(int rowInd=0; rowInd<trainSet.get(0).size(); rowInd++) {
+//                statsMinEdge = new DescriptiveStatistics();
+//                statsMaxEdge = new DescriptiveStatistics();
+//                for(int ind=0; ind<winMinMaxList.size(); ind++) {
+//                    statsMinEdge.addValue(winMinMaxList.get(ind)[rowInd][0]);
+//                    statsMaxEdge.addValue(winMinMaxList.get(ind)[rowInd][1]);
+//                }
+//                minMinEdge = statsMinEdge.getMin();
+//                medianMinEdge = statsMinEdge.getPercentile(50);
+//                if(minMinEdge<Math.floor(medianMinEdge-statsMinEdge.getPercentile(25))) {
+//                    windowMinMax[rowInd][0] = (int)Math.floor(medianMinEdge-statsMinEdge.getPercentile(25));
+//                } else {
+//                    windowMinMax[rowInd][0] = (int)minMinEdge;
+//                }
+//                maxMaxEdge = statsMaxEdge.getMax();
+//                medianMaxEdge = statsMaxEdge.getPercentile(50);
+//                if(maxMaxEdge>Math.ceil(medianMaxEdge+statsMaxEdge.getPercentile(75))) {
+//                    windowMinMax[rowInd][1] = (int)Math.ceil(medianMaxEdge+statsMaxEdge.getPercentile(75));
+//                } else {
+//                    windowMinMax[rowInd][1] = (int)maxMaxEdge;
+//                }
+//            }
+        System.out.println(avg);
+        System.out.print("Window: ");
+        for(int ind=0; ind<windowMinMax.length; ind++) {
+            System.out.print(windowMinMax[ind][0]+ ","+windowMinMax[ind][1]+";");
+            System.arraycopy(windowMinMax[ind], 0, tsDM.windowMinMax[ind], 0, windowMinMax[ind].length);
+        }
+        System.out.println();
         tsDM.setIrregularFlag();
-        System.out.println("Best window: " + bestWindow + ", Least error: " + leastError);
         this.windowSize = -2;
     }
 
