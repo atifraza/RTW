@@ -84,11 +84,14 @@ public class NearestNeighbourLTW extends NearestNeighbourBase {
         TimeSeries test = null, train = null;
         int classPredicted;
         double bestDist;
-        double outerStep = Math.round((endIndex - startIndex) / 10.0);
+        double outerStep = ((endIndex - startIndex) < 10)
+                                                          ? (endIndex - startIndex)
+                                                          : Math.round((endIndex - startIndex)
+                                                                       / 10.0);
         this.startTime = System.currentTimeMillis();
-        for (int h = 0; h < endIndex; h += outerStep) {
+        for (int h = startIndex; h < endIndex; h += outerStep) {
             try {
-                System.out.print((int) Math.floor(100.0 * h
+                System.out.print((int) Math.floor(100.0 * (h - startIndex)
                                                   / (endIndex - startIndex))
                                  + "% ");
                 // this.bwTimeAndLength.write(calcTimeAndPathLen.toString());
