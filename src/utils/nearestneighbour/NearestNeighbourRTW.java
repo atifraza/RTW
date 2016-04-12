@@ -7,6 +7,9 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -98,7 +101,8 @@ public class NearestNeighbourRTW extends NearestNeighbourBase {
             // "_Time_Length.csv");
             // this.bwTimeAndLength = new BufferedWriter(this.fwTimeAndLength);
             
-            this.fwAccuracy = new FileWriter(this.filePath + "_Accuracy.csv");
+            this.fwAccuracy = new FileWriter(this.filePath + "_Accuracy.csv",
+                                             this.appendResults);
             this.bwAccuracy = new BufferedWriter(this.fwAccuracy);
             
             this.fwRunTime = new FileWriter(this.filePath + "_RunTime.csv");
